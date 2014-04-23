@@ -62,3 +62,8 @@ mk.country.data <- function(country.list, alldata) {
                alldata[alldata$ISO==country,]
            }, simplify=FALSE, USE.NAMES=TRUE)
 }
+
+## These are some countries that were challenging in early versions of
+## the model (not all of them still are), so they might be worth
+## taking a closer look at
+problem.countries <- c("ARE", "BHS", "CYP", "LUX", "OMN", "SAU", "SVN")

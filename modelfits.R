@@ -60,6 +60,8 @@ pcc.earth.d2 <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pcc
                       data=datasets$training, degree=2, nk=64)
 pcc.earth.d3 <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock,
                       data=datasets$training, degree=2, nk=128)
+pcc.earth.d3a <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock,
+                       data=datasets$training, degree=2, nk=128, nprune=15)
 
 
 source("modelanly.R")
@@ -86,4 +88,5 @@ cat("\nMARS degree=2 (first-order interactions):\t\tpcc.earth.d2\n")
 print(rms.eval(pcc.earth.d2, datasets, FALSE))
 cat("\nMARS degree=3 (first-order interactions):\t\tpcc.earth.d3\n")
 print(rms.eval(pcc.earth.d3, datasets, FALSE))
-
+cat("\nMARS degree=3, pruned to 15 terms:\t\tpcc.earth.d3a\n")
+print(rms.eval(pcc.earth.d3a, datasets, FALSE))
