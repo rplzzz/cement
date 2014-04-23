@@ -57,10 +57,8 @@ scatterplot.model <- function(model, data, pal="Set1", sz=3) {
 }
 
 mk.country.data <- function(country.list, alldata) {
-    dtmp <- lapply(country.list,
-                   function(country) {
-                       alldata[alldata$ISO==country,]
-                   })
-    names(dtmp) <- country.list
-    dtmp
+    sapply(country.list,
+           function(country) {
+               alldata[alldata$ISO==country,]
+           }, simplify=FALSE, USE.NAMES=TRUE)
 }
