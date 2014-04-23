@@ -56,101 +56,32 @@ pcc.rf.int <- randomForest(formula=pccement~(urban.growth+urban.pop+pcGDP+GDP.ra
 
 ## Multi-adaptive regression splines
 pcc.earth <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock, data=datasets$training)
-##pcc.earth.int <- earth(formula=pccement~pccement~(urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock)^2,
-##                       data=datasets$training)
+pcc.earth.d2 <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock,
+                      data=datasets$training, degree=2)
 
 
-### Evaluate the models.  Here's the evaluator (example:  rms.eval(pcc.lm, datasets, "pccement") )
-rms.eval <- function(model, datasets, prn=TRUE) {
-    if("glm" %in% class(model)) {
-        train.pred   <- predict(object=model, newdata=datasets$training, type="response")
-        test.pred    <- predict(object=model, newdata=datasets$testing, type="response")
-    }
-    else {
-        train.pred   <- predict(object=model, newdata=datasets$training)
-        test.pred    <- predict(object=model, newdata=datasets$testing)
-    }        
-    train.actual <- datasets$training$pccement
-    test.actual  <- datasets$testing$pccement
+source("modelanly.R")
 
-    train.err    <- sqrt(mean((train.actual - train.pred)^2))
-    test.err     <- sqrt(mean((test.actual - test.pred)^2))
-
-    train.maxloc <- which.max(abs(train.actual - train.pred))
-    train.max    <- train.pred[train.maxloc] - train.actual[train.maxloc]
-    test.maxloc  <- which.max(abs(test.actual - test.pred))
-    test.max     <- test.pred[test.maxloc] - test.actual[test.maxloc]
-
-    if(prn) {
-        cat("\n\tmax error entry for training set\n")
-        print(datasets$training[train.maxloc,])
-        cat("\n\tmax error entry for testing set\n")
-        print(datasets$testing[test.maxloc,])
-        cat("\n")
-    }
-    c(training.rmserr=train.err, testing.rmserr=test.err, training.maxerr=train.max, testing.maxerr=test.max)
-}
-
-## model.scatterplot <- function(model, dat) {
-##     if("glm" %in% class(model)) {
-##         train.pred   <- c(predict(object=model, newdata=dat$training, type="response")) # c() strips out unwanted attributes
-##         test.pred    <- c(predict(object=model, newdata=dat$testing, type="response"))
-##     }
-##     else {
-##         train.pred   <- c(predict(object=model, newdata=dat$training)) # c() strips out unwanted attributes
-##         test.pred    <- c(predict(object=model, newdata=dat$testing))
-##     }        
-##     train.actual <- dat$training$pccement
-##     test.actual  <- dat$testing$pccement
-
-##     pd.training <- data.frame(actual=train.actual, model=train.pred, dataset="training")
-##     pd.testing  <- data.frame(actual=test.actual, model=test.pred, dataset="testing")
-##     pd <- rbind(pd.training, pd.testing)
-##     qplot(x=actual, y=model, data=pd, geom="point", color=dataset) + ggtitle("Per Capita Cement: model vs. actual") +
-##         stat_function(fun="identity")
-## }
-
-scatterplot.model <- function(model, data, pal="Set1") {
-    pltdata <- lapply(data,
-                      function(dat) {
-                          pred <- if("glm" %in% class(model)) {
-                              c(predict(object=model, newdata=dat, type="response"))
-                          }
-                          else {
-                              c(predict(object=model, newdata=dat))
-                          }
-                          act <- dat$pccement
-                          data.frame(actual=act, model=pred)
-                      })
-    for(dset in names(pltdata))
-        pltdata[[dset]]$dataset <- dset
-    pltdata <- do.call(rbind,pltdata)
-    qplot(x=actual, y=model, data=pltdata, geom="point", color=dataset) +
-        ggtitle("Per Capita Cement: model vs. actual") +
-            scale_color_brewer(type="qual", palette=pal) +
-                stat_function(fun="identity", color="black") 
-}
-
-
-cat("\nlinear:\n")
+cat("\nlinear:\t\tpcc.lm\n")
 print(rms.eval(pcc.lm, datasets, FALSE))
-cat("\nstepwise linear:\n")
+cat("\nstepwise linear:\t\tpcc.lm.step\n")
 print(rms.eval(pcc.lm.step, datasets, FALSE))
-cat("\nglm (Gamma):\n")
+cat("\nglm (Gamma(link=log)):\t\tpcc.glm\n")
 print(rms.eval(pcc.glm, datasets, FALSE))
 ## cat("\nstepwise glm:\n") ### didn't solve properly
 ## print(rms.eval(pcc.glm.step, datasets, FALSE))
-cat("\nglm (Gaussian):\n")
+cat("\nglm (gaussian(link=log)):\t\tpcc.glm.gauss\n")
 print(rms.eval(pcc.glm.gauss, datasets, FALSE))
-cat("\nregression tree:\n")
+cat("\nregression tree:\t\tpcc.rpart\n")
 print(rms.eval(pcc.rpart, datasets, FALSE))
-cat("\nrandom forest (no interactions):\n")
+cat("\nrandom forest (no interactions):\t\tpcc.rf\n")
 print(rms.eval(pcc.rf, datasets, FALSE))
-cat("\nrandom forest (including interaction terms):\n")
+cat("\nrandom forest (including interaction terms):\t\tprr.rf.int\n")
 print(rms.eval(pcc.rf.int, datasets, FALSE))
-cat("\nMARS (no interactions):\n")
+cat("\nMARS degree=1 (i.e., no interactions):\t\tpcc.earth\n")
 print(rms.eval(pcc.earth, datasets, FALSE))
-## cat("\nMARS (including interaction terms):\n")
-## print(rms.eval(pcc.earth.int, datasets, FALSE))
+cat("\nMARS degree=2 (first-order interactions):\t\tpcc.earth.d2\n")
+print(rms.eval(pcc.earth.d2, datasets, FALSE))
+
 
 
