@@ -55,3 +55,12 @@ scatterplot.model <- function(model, data, pal="Set1", sz=3) {
                 scale_color_brewer(type="qual", palette=pal) +
                     stat_function(fun="identity", color="black", linetype=2, size=1) 
 }
+
+mk.country.data <- function(country.list, alldata) {
+    dtmp <- lapply(country.list,
+                   function(country) {
+                       alldata[alldata$ISO==country,]
+                   })
+    names(dtmp) <- country.list
+    dtmp
+}
