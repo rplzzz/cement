@@ -10,3 +10,10 @@
 # Emacs backup files
 *~
 
+# Emacs autosave files
+.[#]*
+[#]*[#]
+
+
+# figures directory
+fig/
