@@ -18703,4 +18703,4 @@ structure(list(ISO = c("AFG", "AFG", "AFG", "AFG", "AFG", "AFG",
     "GDP.rate", "cement.stock", "pccement.stock"), class = "factor")), .Names = "variable", row.names = c("pop.tot", 
 "urban.growth", "cement", "urban.pop", "GDP", "pcGDP", "pccement", 
 "cement.intensity", "GDP.rate", "cement.stock", "pccement.stock"
-), class = "data.frame")), comment = "Mon Apr 21 07:55:13 2014")
+), class = "data.frame")), comment = "Wed Apr 23 09:52:17 2014")

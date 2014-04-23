@@ -16,16 +16,16 @@ reorg.by.yr <- function(dd, name) {
 }
 
 ## Country code lookup table.  Some tables need this, some don't
-ccodes <- read.csv("country-codes-with-synonyms.csv", comment.char='#')
+ccodes <- read.csv("raw/country-codes-with-synonyms.csv", comment.char='#')
 ccodes$country <- tolower(ccodes$country)
 
 ## Urban population fraction
-urban.pop <- read.csv("urban-pop-pct.csv")
+urban.pop <- read.csv("raw/urban-pop-pct.csv")
 urban.pop <- to.ISO(urban.pop)
 urban.pop.m <- reorg.by.yr(urban.pop, "urban.pop")
 
 ## GDP
-gdp.mer <- read.csv("USDA_GDP_MER.csv", comment.char='#')
+gdp.mer <- read.csv("raw/USDA_GDP_MER.csv", comment.char='#')
 gdp.mer$ISO <- toupper(gdp.mer$iso)
 gdp.mer$iso <- NULL
 gdp.mer.m <- melt(gdp.mer, variable="xyear")
@@ -37,7 +37,7 @@ master.table <- merge(select.complete(urban.pop.m), select.complete(gdp.mer.m))
 
 ## CO2 emissions from various sources.  We are using the cement
 ## emissions as a proxy for cement production
-co2 <- read.csv("L100.CDIAC_CO2_ctry_hist.csv", comment.char='#')
+co2 <- read.csv("raw/L100.CDIAC_CO2_ctry_hist.csv", comment.char='#')
 co2$ISO <- toupper(co2$iso)
 co2 <- subset(co2, select=c(ISO, year, cement))
 ## Some countries have multiple entries in a year, typically
@@ -48,12 +48,12 @@ names(co2)[names(co2)=="x"] = "cement"
 master.table <- merge(co2,master.table)
 
 ## Growth rate for urban population fraction
-urban.growth <- to.ISO(read.csv("urban-pop-growth.csv",comment.char='#'))
+urban.growth <- to.ISO(read.csv("raw/urban-pop-growth.csv",comment.char='#'))
 urban.growth.m <- reorg.by.yr(select.complete(urban.growth), "urban.growth")
 master.table <- merge(urban.growth.m, master.table)
 
 ## Total population
-pop.tot <- read.csv("UN_popTot.csv", comment.char='#')
+pop.tot <- read.csv("raw/UN_popTot.csv", comment.char='#')
 pop.tot <- pop.tot[pop.tot$Scenario=="EST",]
 pop.tot$Region <- NULL
 pop.tot$Sex <- NULL
