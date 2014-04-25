@@ -58,10 +58,16 @@ pcc.rf.int <- randomForest(formula=pccement~(urban.growth+urban.pop+pcGDP+GDP.ra
 pcc.earth <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock, data=datasets$training)
 pcc.earth.d2 <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock,
                       data=datasets$training, degree=2, nk=64)
-pcc.earth.d3 <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock,
+pcc.earth.d2a <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock,
                       data=datasets$training, degree=2, nk=128)
-pcc.earth.d3a <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock,
+pcc.earth.d2b <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock,
                        data=datasets$training, degree=2, nk=128, nprune=15)
+pcc.earth.d3 <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock,
+                      data=datasets$training, degree=3, nk=128)
+pcc.earth.d3a <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate+pccement.stock,
+                      data=datasets$training, degree=3, nk=128, nprune=20)
+pcc.earth.nostock <- earth(formula=pccement~urban.growth+urban.pop+pcGDP+GDP.rate,
+                           data=datasets$training, degree=3, nk=128, nprune=15)
 
 
 source("modelanly.R")
@@ -86,7 +92,11 @@ cat("\nMARS degree=1 (i.e., no interactions):\t\tpcc.earth\n")
 print(rms.eval(pcc.earth, datasets, FALSE))
 cat("\nMARS degree=2 (first-order interactions):\t\tpcc.earth.d2\n")
 print(rms.eval(pcc.earth.d2, datasets, FALSE))
-cat("\nMARS degree=3 (first-order interactions):\t\tpcc.earth.d3\n")
+cat("\nMARS degree=2, nk=128:\t\tpcc.earth.d2a\n")
+print(rms.eval(pcc.earth.d2a, datasets, FALSE))
+cat("\nMARS degree=2, pruned to 15 terms:\t\tpcc.earth.d2b\n")
+print(rms.eval(pcc.earth.d2b, datasets, FALSE))
+cat("\nMARS degree=3 (second-order interactions):\t\tpcc.earth.d3\n")
 print(rms.eval(pcc.earth.d3, datasets, FALSE))
-cat("\nMARS degree=3, pruned to 15 terms:\t\tpcc.earth.d3a\n")
+cat("\nMARS degree=3, pruned to 20 terms:\t\tpcc.earth.d3a\n")
 print(rms.eval(pcc.earth.d3a, datasets, FALSE))
