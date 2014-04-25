@@ -7,8 +7,11 @@ if(!exists("master.table")) master.table <- dget(file="cement-table.dat")
 
 ## filter out all of the data with zero production.  Also, since the
 ## data are highly serially correlated, take only a single datum per
-## decade from each country.
-master.nonzero <- master.table[master.table$cement > 0 & master.table$year %% 10 == 9,]
+## decade from each country.  Finally, the data from the Bahamas looks
+## weird (among other things, it's only present for a few years), so
+## exclude it.
+master.nonzero <- master.table[master.table$cement > 0 & master.table$year %% 10 == 9
+                               & master.table$ISO != "BHS",]
 
 ## select a sample of countries to hold back for a validation set (the "testing set")
 if(!exists("testing.countries")) {
