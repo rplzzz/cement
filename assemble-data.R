@@ -96,6 +96,14 @@ working.table <- lapply(working.table,
                         })
 
 
+## add a five-year lagged per-capita production
+working.table <- lapply(working.table,
+                        function(tbl) {
+                            n <- length(tbl$pccement)-5
+                            tbl$pccement.lag5 <- c(rep(NA,5), tbl$pccement[1:n])
+                            tbl
+                        })
+
 ## We want 20 years worth of accumulation in the cement stock.  Trim
 ## any values before that.  -- NB: disabled. any calcs involving
 ## cement stock will be questionable until we restore it.
@@ -108,15 +116,8 @@ working.table <- lapply(working.table,
 ##                                 data.frame(tbl[20:length(tbl$year),])
 ##                         })
 
-### Replacement:  trims the NA value at the beginning of each GDP rate column
-## working.table <- lapply(working.table,
-##                         function(tbl) {
-##                             if(length(tbl$year) < 2)
-##                                 NA
-##                             else
-##                                 data.frame(tbl[2:length(tbl$year),])
-##                         })
 
+## Trim away all the data with NA values
 working.table <- lapply(working.table,
                         function(tbl) {
                             data.frame(tbl[complete.cases(tbl),])
