@@ -66,4 +66,6 @@ mk.country.data <- function(country.list, alldata) {
 ## These are some countries that were challenging in early versions of
 ## the model (not all of them still are), so they might be worth
 ## taking a closer look at
-problem.countries <- c("ARE", "BHS", "CYP", "LUX", "OMN", "SAU", "SVN")
+problem.countries <- c("ARE", "CYP", "LUX", "OMN", "SAU", "SVN")
+pltdata <- c(datasets, mk.country.data(problem.countries, master.nonzero))
+
