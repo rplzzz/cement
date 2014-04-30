@@ -1,4 +1,53 @@
-### Evaluate the models.  Here's the evaluator (example:  rms.eval(pcc.lm, datasets, "pccement") )
+
+
+
+### For models that use lagged predictors, we can't evaluate the fit
+### using the lagged actual predictors, so we need to go through the
+### data sequentially for each country to construct the lagged model
+predict.simul <- function(object, newdata, lag=5, lagvar="pccement.lag5", type="response") {
+    ## deal with the glm absurdity
+    pfun <- if("glm" %in% class(object)) {
+        function(data) {predict(object=object, newdata=data, type=type)}
+    }
+    else {
+        function(data) {predict(object=object, newdata=data)}
+    } 
+
+    ## This function simulates a single country, stepping through the
+    ## years, computing the predicted output, and placing that into
+    ## the lagged output variable for the appropriate future year.  It
+    ## goes without saying that for this to work the lag length must
+    ## be evenly divisible by the step size in the data.
+    simul <- function(dat) {
+        n <- nrow(dat)
+        predictions <- 0
+        length(predictions) <- n
+        for(i in 1:n) {
+            predictions[i] <- pfun(dat[i,])
+            j   <- min(i+lag,n)               # maximum number of entries further on the lag could be
+            yr  <- dat$year[i]+lag       # year that will have this prediction as its lagged data
+            if(i<j) {
+                for(k in (i+1):j) {
+                    if(dat$year[k] == yr) {
+                        dat[[lagvar]][k] <- predictions[i]
+                        break
+                    }
+                }
+            }
+        }
+        predictions                 # return the vector of predictions
+    }
+    
+    ## Split the input data by country, apply simul to each country, then reassemble
+    unsplit(              # reassemble the results of the lapply into a single vector
+            lapply(                         # apply the function below to the split data
+                   split(newdata,newdata$ISO), # split the data by country
+                   simul),
+            newdata$ISO)
+    ## ^ return the reassembled vector.
+}
+
+### Evaluate the models.  Here's the evaluator (example:  rms.eval(pcc.lm, datasets, "pccement") ) 
 rms.eval <- function(model, datasets, prn=TRUE) {
     ## Unlike the plotting function, this function wants a list with two datasets: training and testing (FIXME)
     if("glm" %in% class(model)) {
