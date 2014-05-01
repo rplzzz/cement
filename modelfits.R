@@ -13,6 +13,10 @@ if(!exists("master.table")) master.table <- dget(file="cement-table.dat")
 master.nonzero <- master.table[master.table$cement > 0 & master.table$year %% 10 == 9
                                & master.table$ISO != "BHS",]
 
+## having data at 5-year resolution will be useful for evaluating the
+## fits.  Leave the cement=0 lines in.
+master.5yr <- master.table[master.table$year %% 5 == 4 & master.table$ISO != "BHS",]
+
 ## select a sample of countries to hold back for a validation set (the "testing set")
 if(!exists("testing.countries")) {
     if(file.exists("testing-countries.dat"))
