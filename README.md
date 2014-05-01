@@ -1,9 +1,7 @@
-cement
-======
+# Predictive model for GHG emissions from cement production
 
-= Predictive model for GHG emissions from cement production
+## Description of data
 
-== Description of data
 The main data table is called master.table.  It is created from the
 raw data by the assemble-data.R script and saved to the file
 cement-data.dat.  Other programs look for the cement-data.dat file, so
@@ -75,4 +73,6 @@ Incomplete entries are trimmed out of the final table.
     Units:  Kt C/person<br>
     Source:  Internally calculated
 
- 
+## Analysis techniques
+
+TODO 
