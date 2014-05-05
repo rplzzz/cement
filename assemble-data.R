@@ -134,3 +134,20 @@ master.table <- cast(master.table.m,ISO+year~variable)
 comment(master.table) <- date()
 dput(master.table, file="cement-table.dat")
 
+### select a sample of countries to hold back for a validation set (the "testing set")
+### This will only happen if the list of testing countries isn't
+### present on the disk.  Otherwise we load the previously generated
+### set.
+if(file.exists("testing-countries.dat"))
+    testing.countries <- dget(file="testing-countries.dat")
+else {
+    testing.countries <- with(list(countries=levels(as.factor(master.nonzero$ISO))),
+                              sample(countries, length(countries)/5))
+    ## Make sure China is a testing country
+    if(!"CHN" %in% testing.countries)
+        testing.countries <- c(testing.countries, "CHN")
+    comment(testing.countries) <- date()
+    dput(testing.countries, file="testing-countries.dat") 
+}
+print("Testing countries are:")
+print(testing.countries)

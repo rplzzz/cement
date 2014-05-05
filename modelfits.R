@@ -17,18 +17,9 @@ master.nonzero <- master.table[master.table$cement > 0 & master.table$year %% 10
 ## fits.  Leave the cement=0 lines in.
 master.5yr <- master.table[master.table$year %% 5 == 4 & master.table$ISO != "BHS",]
 
-## select a sample of countries to hold back for a validation set (the "testing set")
+## Load the validation set.
 if(!exists("testing.countries")) {
-    if(file.exists("testing-countries.dat"))
-        testing.countries <- dget(file="testing-countries.dat")
-    else {
-        testing.countries <- with(list(countries=levels(as.factor(master.nonzero$ISO))),
-                                  sample(countries, length(countries)/5))
-        comment(testing.countries) <- date()
-        dput(testing.countries, file="testing-countries.dat") 
-    }
-    print("Testing countries are:")
-    print(testing.countries)
+    testing.countries <- dget(file="testing-countries.dat")
 } 
 
 datasets <- split(master.nonzero, master.nonzero$ISO %in% testing.countries)
