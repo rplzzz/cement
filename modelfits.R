@@ -66,11 +66,14 @@ pcstock.glm.gauss <- glm(formula=f.pcstock.d2, family=gaussian(link=log), data=d
 ## Add some more:  regression trees, etc.
 ## regression tree - note regression trees can't do interaction terms, so we have to use the d1 version
 pcstock.rpart <- rpart(formula=f.pcstock.d1, data=datasets$training)
+basic.rpart   <- rpart(formula=f.basic.d1, data=datasets$training)
 lag5.rpart    <- rpart(formula=f.lag5.d1, data=datasets$training)
 
 ## random forest
 pcstock.rf.d1 <- randomForest(formula=f.pcstock.d1, data=datasets$training)
 pcstock.rf.d2 <- randomForest(formula=f.pcstock.d2, data=datasets$training)
+basic.rf.d1   <- randomForest(formula=f.basic.d1,   data=datasets$training)
+basic.rf.d2   <- randomForest(formula=f.basic.d2,   data=datasets$training)
 
 ## Multi-adaptive regression splines 
 ## Note: the earth function always wants a degree=1 formula.  You
@@ -84,6 +87,7 @@ pcstock.earth.d2b <- earth(formula=f.pcstock.d1, data=datasets$training, degree=
 pcstock.earth.d3  <- earth(formula=f.pcstock.d1, data=datasets$training, degree=3, nk=128)
 pcstock.earth.d3a <- earth(formula=f.pcstock.d1, data=datasets$training, degree=3, nk=128, nprune=20)
 
+basic.earth.d1    <- earth(formula=f.basic.d1, data=datasets$training, degree=1)
 basic.earth.d3    <- earth(formula=f.basic.d1, data=datasets$training, degree=3, nk=128, nprune=15)
 
 lag5.earth.d1     <- earth(formula=f.lag5.d1, data=datasets$training, degree=1)
@@ -94,20 +98,17 @@ lag5.earth.d3a    <- earth(formula=f.lag5.d1, data=datasets$training, degree=3, 
 
 source("modelanly.R")
 
+cat("\nModels using 'carbon stock'\n")
 cat("\nlinear:\t\tpcstock.lm\n")
 print(rms.eval(pcstock.lm, datasets, FALSE))
 cat("\nstepwise linear:\t\tpcstock.lm.step\n")
 print(rms.eval(pcstock.lm.step, datasets, FALSE))
-cat("\nstepwise linear lag5:\t\tlag5.lm.step\n")
-print(rms.eval(lag5.lm.step, datasets, FALSE))
 cat("\nglm (Gamma(link=log)):\t\tpcstock.glm\n")
 print(rms.eval(pcstock.glm, datasets, FALSE))
 cat("\nglm (gaussian(link=log)):\t\tpcstock.glm.gauss\n")
 print(rms.eval(pcstock.glm.gauss, datasets, FALSE))
 cat("\nregression tree:\t\tpcstock.rpart\n")
 print(rms.eval(pcstock.rpart, datasets, FALSE))
-cat("\nregression tree lag5:\t\tlag5.rpart\n")
-print(rms.eval(lag5.rpart, datasets, FALSE))
 cat("\nrandom forest (no interactions):\t\tpcstock.rf.d1\n")
 print(rms.eval(pcstock.rf.d1, datasets, FALSE))
 cat("\nrandom forest (including interaction terms):\t\tpcstock.rf.d2\n")
@@ -118,8 +119,12 @@ cat("\nMARS degree=2, pruned to 15 terms:\t\tpcstock.earth.d2b\n")
 print(rms.eval(pcstock.earth.d2b, datasets, FALSE))
 cat("\nMARS degree=3, pruned to 20 terms:\t\tpcstock.earth.d3a\n")
 print(rms.eval(pcstock.earth.d3a, datasets, FALSE))
-cat("\nMARS degree=3, no carbon stock term:\t\tbasic.earth.d3\n")
-print(rms.eval(basic.earth.d3, datasets, FALSE))
+
+cat("\nModels using lag5\n")
+cat("\nstepwise linear lag5:\t\tlag5.lm.step\n")
+print(rms.eval(lag5.lm.step, datasets, FALSE))
+cat("\nregression tree lag5:\t\tlag5.rpart\n")
+print(rms.eval(lag5.rpart, datasets, FALSE))
 cat("\nMARS degree=1, lag5:\t\tlag5.earth.d1\n")
 print(rms.eval(lag5.earth.d1, datasets, FALSE)) 
 cat("\nMARS degree=2, lag5:\t\tlag5.earth.d2\n")
@@ -130,3 +135,14 @@ cat("\nMARS degree=3, lag5:\t\tlag5.earth.d3\n")
 print(rms.eval(lag5.earth.d3, datasets, FALSE))
 cat("\nMARS degree=3, lag5 (pruned to 20):\t\tlag5.earth.d3a\n")
 print(rms.eval(lag5.earth.d3a, datasets, FALSE))
+
+cat("\nModels uging only the basic predictors\n")
+cat("\nMARS degree=3:\t\tbasic.earth.d3\n")
+print(rms.eval(basic.earth.d3, datasets, FALSE))
+cat("\nMARS degree=1:\t\tbasic.earth.d1\n")
+cat("\nrpart:\tbasic.rpart\n")
+print(rms.eval(basic.rpart, datasets, FALSE))
+cat("\nrandom forest degree=1:\t\tbasic.rf.d1\n")
+print(rms.eval(basic.rf.d1, datasets, FALSE))
+cat("\nrandom forest degree=2:\t\tbasic.rf.d2\n")
+print(rms.eval(basic.rf.d2, datasets, FALSE))
