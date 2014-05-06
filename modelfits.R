@@ -45,6 +45,7 @@ f.lag5.d2 <- as.formula(pccement~(urban.growth + urban.pop + pcGDP + GDP.rate + 
 ## Linear regression
 pcstock.lm <- lm(formula=f.pcstock.d2, data=datasets$training)
 lag5.lm    <- lm(formula=f.lag5.d2, data=datasets$training)
+basic.lm   <- lm(formula=f.basic.d1, data=datasets$training)
 
 ## stepwise lr
 pcstock.lm.step <- step(pcstock.lm)
