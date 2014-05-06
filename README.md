@@ -44,7 +44,7 @@ Incomplete entries are trimmed out of the final table.
    http://www.ers.usda.gov/datafiles/International_Macroeconomic_Data/Historical_Data_Files/HistoricalRealGDPValues.xls
 
 8. **pcGDP**:  per-capita GDP<br>
-   Units:  billion 2005 US$/person<br>
+   Units:  million 2005 US$/person<br>
    Source:  Internally calculated
 
 9. **pccement**:  per-capita CO2 emissions from cement<br>
