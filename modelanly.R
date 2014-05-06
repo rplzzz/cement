@@ -118,3 +118,53 @@ mk.country.data <- function(country.list, alldata) {
 problem.countries <- c("ARE", "CYP", "LUX", "OMN", "SAU", "SVN")
 pltdata <- c(datasets, mk.country.data(problem.countries, master.nonzero))
 
+
+#### functions for plotting and analyzing cluster analyses
+
+### make a data frame of the cluster centroids
+cluster.centroids <- function(cluster.obj, data) {
+    clist <- split(data,cluster.obj$cluster)
+    sapply(clist, function(tbl){colMeans(tbl[,cluster.basic])})
+}
+
+### plot a box-plot of the cluster variables
+cluster.boxplot <- function(cluster.obj, data,
+                            vars=c("pccement","urban.growth", "urban.pop", "pcGDP", "GDP.rate"),
+                            logs=NULL,
+                            layout=NULL) {
+    if(is.null(layout)) {
+        ## guess the layout of the plots from the number of variables
+        n     <- length(vars)
+        sqrn  <- sqrt(n)
+        sqrnl <- floor(sqrn)
+        sqrnh <- ceiling(sqrn)
+        if(sqrnl == sqrnh)
+            layout <- as.integer(c(sqrnl,sqrnl))
+        else if(sqrnl*sqrnh >= n)
+            ## more columns than rows
+            layout <- as.integer(c(sqrnl,sqrnh))
+        else
+            layout <- as.integer(c(sqrnh,sqrnh))
+    }
+    ## If the layout was specified, it's on the user if it's not big enough for all the plots
+
+    if(is.null(logs)) {
+        zero   <- sapply(vars, function(v) {any(data[[v]] <= 0)})
+        excl   <- sapply(vars, function(v) {
+            v %in% c("urban.pop") # predictors we don't want to log, even if they are all positive
+        })
+        logs   <- ifelse(zero | excl, "", "y")
+    }
+
+    par(mfrow=layout)
+    cluster <- cluster.obj$cluster
+
+    for(i in 1:n) {
+        var  <- vars[i]
+        logp <- logs[i]
+        form <- as.formula(paste(var,"cluster", sep='~'))
+        boxplot(formula=form, data=data, main=var, log=logp)
+    }
+}
+
+    

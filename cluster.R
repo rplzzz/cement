@@ -3,6 +3,7 @@ require(cluster)
 ## Do some clustering analysis on the data
 
 if(!exists("master.table")) master.table <- dget(file="cement-table.dat")
+if(!exists("testing.countries")) testing.countries <- dget(file="testing-countries.dat")
 
 ### create a version that has the zero entries filtered out.  This is
 ### slightly different than the one created in modelfits.R, so we
@@ -33,5 +34,24 @@ cluster.basic <- c("pccement",predictors.basic)
 ## have very different magnitudes.  Using the manhattan metric on a
 ## hunch.
 dist.full.cb <- daisy(master.table[,cluster.basic], metric="manhattan", stand=TRUE)
-km.full.cb.5 <- kmeans(dist.full.cb, centers=5)
+if(!exists("km.full.cb.5")) {             # don't compute it, if it's already been done
+    km.full.cb.5 <- kmeans(dist.full.cb, centers=5)
+}
+## got one cluster that seemed like kind of a hodgepodge, so try 6 centers
+if(!exists("km.full.cb.6")) {
+    km.full.cb.6 <- kmeans(dist.full.cb, centers=6)
+}
+
+## cluster on just the countries with nonzero production.  In keeping
+## with our hypotheses above, this should require one fewer cluster
+## than the ones above.
+dist.nonzero.cb <- daisy(master.nz[,cluster.basic],
+                         metric="manhattan", stand=TRUE)
+if(!exists("km.nonzero.cb.4")) {
+    km.nonzero.cb.4 <- kmeans(dist.nonzero.cb, centers=4)
+}
+if(!exists("km.nonzero.cb.5")) {
+    km.nonzero.cb.5 <- kmeans(dist.nonzero.cb, centers=5)
+}
+
 
