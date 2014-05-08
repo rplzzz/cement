@@ -73,36 +73,28 @@ master.table$ISO <- factor(master.table$ISO) #get rid of unused levels
 master.table.m <- melt(master.table, id=c("ISO", "year", "Country"))
 working.table <- cast(master.table.m, year~variable|ISO)
 
-## GDP growth rate
 working.table <- lapply(working.table,
-                        # compute growth rate from lagged differences.
-                        # Allow for the possibility that the years are
-                        # nonconsecutive.
                         function(tbl) {
+                            ## GDP growth rate
+                            ## compute growth rate from lagged differences.
+                            ## Allow for the possibility that the years are
+                            ## nonconsecutive.
                             d  <- c(diff(tbl$GDP),NA)
                             yd <- c(diff(tbl$year),NA)
                             dr <- d/tbl$GDP
                             r  <- (1+dr)**(1/yd) - 1
                             tbl$GDP.rate <- c(NA,r[1:length(r)-1])
-                            tbl
-                        })
 
-## cement stock -- NB: this calculation isn't exactly right.
-working.table <- lapply(working.table,
-                        function(tbl) {
+                            ## cement stock -- NB: this calculation isn't exactly right.
                             tbl$cement.stock <- cumsum(tbl$cement)
                             tbl$pccement.stock <- tbl$cement.stock / tbl$pop.tot
-                            tbl
-                        })
 
-
-## add a five-year lagged per-capita production
-working.table <- lapply(working.table,
-                        function(tbl) {
+                            ## five-year lagged per-capita production
                             n <- length(tbl$pccement)-5
-                            tbl$pccement.lag5 <- c(rep(NA,5), tbl$pccement[1:n])
+                            tbl$pccement.lag5 <- c(rep(NA,5), tbl$pccement[1:n]) 
                             tbl
                         })
+
 
 ## We want 20 years worth of accumulation in the cement stock.  Trim
 ## any values before that.  -- NB: disabled. any calcs involving
@@ -138,9 +130,9 @@ dput(master.table, file="cement-table.dat")
 ### This will only happen if the list of testing countries isn't
 ### present on the disk.  Otherwise we load the previously generated
 ### set.
-if(file.exists("testing-countries.dat"))
+if(file.exists("testing-countries.dat")) {
     testing.countries <- dget(file="testing-countries.dat")
-else {
+} else {
     testing.countries <- with(list(countries=levels(as.factor(master.nonzero$ISO))),
                               sample(countries, length(countries)/5))
     ## Make sure China is a testing country
