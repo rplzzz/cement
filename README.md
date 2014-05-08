@@ -9,7 +9,11 @@ once it's been created you don't need to run assemble-data.R anymore
 unless the data changes.
 
 Each line of the table has the data for one country, for one year.
-Incomplete entries are trimmed out of the final table.
+Incomplete entries are trimmed out of the final table.  Any cement
+production values of zero are treated as missing and filtered out of
+the data.  The reason we do this is that we are assuming that all of
+this production data is a proxy for consumption, and we don't really
+think that any of these countries consumed no cement at all.
 
 1. **ISO**:  The three-letter ISO code for the country.
 

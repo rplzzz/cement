@@ -60,6 +60,9 @@ pop.tot$Sex <- NULL
 pop.tot$Scenario <- NULL
 master.table <- merge(pop.tot, master.table)
 
+## Treat 0 cement values as missing
+master.table$cement[master.table$cement <= 0] <- NA
+
 ## per capita quantities
 master.table$pcGDP <- master.table$GDP / master.table$pop.tot
 master.table$pccement <- master.table$cement / master.table$pop.tot
@@ -75,19 +78,25 @@ working.table <- cast(master.table.m, year~variable|ISO)
 
 working.table <- lapply(working.table,
                         function(tbl) {
-                            ## GDP growth rate
-                            ## compute growth rate from lagged differences.
-                            ## Allow for the possibility that the years are
-                            ## nonconsecutive.
+                            ## cement stock -- NB: this calculation
+                            ## isn't exactly right.  We should have a
+                            ## window instead of a cumulative sum from
+                            ## the very beginning.
+                            tbl$cement.stock <- cumsum(tbl$cement)
+                            tbl$pccement.stock <- tbl$cement.stock / tbl$pop.tot
+                            
+                            ## compound annualized GDP growth rate
+                            ## over 5 years. Compute growth rate from
+                            ## lagged differences.  Allow for the
+                            ## possibility that there are missing
+                            ## years, in which case the averaging
+                            ## period won't be exactly 5 years.
                             d  <- c(diff(tbl$GDP),NA)
                             yd <- c(diff(tbl$year),NA)
                             dr <- d/tbl$GDP
                             r  <- (1+dr)**(1/yd) - 1
                             tbl$GDP.rate <- c(NA,r[1:length(r)-1])
 
-                            ## cement stock -- NB: this calculation isn't exactly right.
-                            tbl$cement.stock <- cumsum(tbl$cement)
-                            tbl$pccement.stock <- tbl$cement.stock / tbl$pop.tot
 
                             ## five-year lagged per-capita production
                             n <- length(tbl$pccement)-5
@@ -108,7 +117,6 @@ working.table <- lapply(working.table,
 ##                                 data.frame(tbl[20:length(tbl$year),])
 ##                         })
 
-
 ## Trim away all the data with NA values
 working.table <- lapply(working.table,
                         function(tbl) {
@@ -116,8 +124,8 @@ working.table <- lapply(working.table,
                         })
 
 ## delete the countries that had insufficient data
-working.table[is.na(working.table)] <- NULL
-master.table.m <- melt(working.table, id="year", na.rm=TRUE)
+working.table[lapply(working.table, nrow)<10] <- NULL
+master.table.m <- melt(working.table, id="year") 
 names(master.table.m)[names(master.table.m)=="L1"] <- "ISO"
 master.table <- cast(master.table.m,ISO+year~variable)
 

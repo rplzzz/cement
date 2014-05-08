@@ -1,4 +1,4 @@
-structure(c("GHA", "NER", "AGO", "CHE", "AUT", "DNK", "ARE", 
-"ZAF", "RUS", "BRN", "LBY", "UZB", "LBR", "SLV", "DEU", "LAO", 
-"HND", "IDN", "SLE", "CIV", "BLR", "CHN", "TKM", "BEL", "MWI", 
-"JAM", "IRL", "SVN"), comment = "Fri Apr 25 15:59:04 2014")
+structure(c("SEN", "HRV", "KHM", "CAN", "KOR", "CIV", "LBR", 
+"LKA", "SWE", "LAO", "CHE", "AZE", "CYP", "PHL", "NZL", "NGA", 
+"LVA", "COL", "SLV", "CRI", "ZWE", "MLI", "EGY", "IRN", "CHL", 
+"BIH", "BHR", "UGA", "CHN"), comment = "Thu May  8 11:11:53 2014")
