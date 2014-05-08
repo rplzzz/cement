@@ -2,10 +2,8 @@ require(ggplot2)
 require(gridExtra)
 
 if(!exists("master.table")) master.table <- dget(file="cement-table.dat")
-## The cement stocks are are really only meaningful when we've got about 20 years worth of data
-stock.table <- master.table[master.table$year >= 1990, ]
 
-scatter.vars <- list("urban.growth", "urban.pop", "pcGDP", "GDP.rate", "pccement.stock")
+scatter.vars <- list("urban.growth", "urban.pop", "pcGDP", "GDP.rate", "pcc.rate", "pccement")
 
 ## for an input string, return the elements of the input list that follow the string
 trimlist <- function(str,ll) {
@@ -21,13 +19,17 @@ trimlist <- function(str,ll) {
 }
 
 ## scatter pccement against each of the scatter vars
-pccplots <- lapply(scatter.vars,
-                   function(var) {
-                       table <- if(var == "pccement.stock") stock.table else master.table
-                       qplot(data=table, x=eval(as.symbol(var)), y=pccement, geom="point", color=ISO) +
-                           theme(legend.position="none") + xlab(var)
-                   })
+scatter.outvar <- function(outvar) {
+    lapply(scatter.vars,
+           function(var) {
+               table <- if(var == "pccement.stock") stock.table else master.table
+               qplot(data=table, x=eval(as.symbol(var)), y=eval(as.symbol(outvar)), geom="point", color=ISO) +
+                   theme(legend.position="none") + xlab(var) + ylab(outvar)
+           })
+}
 
+pccplots <- scatter.outvar("pccement")
+pccrateplots <- scatter.outvar("pcc.rate")
 
 scatterplots <- as.list(
     unlist(
@@ -46,7 +48,7 @@ scatterplots <- as.list(
 key <- qplot(data=master.table[master.table$pccement>0.2,], x=urban.pop, y=pccement, geom="point", color=ISO)
 
 
-cat("Plots are in 'pccplots' and 'scatterplots'.  Try something like the following to view them:",
+cat("Plots are in 'pccplots', 'pccrateplots', and 'scatterplots'.  Try something like the following to view them:",
     " do.call(grid.arrange, pccplots)",
     " do.call(grid.arrange,scatterplots)", sep='\n')
 

@@ -48,7 +48,7 @@ predict.simul <- function(object, newdata, lag=5, lagvar="pccement.lag5", type="
 }
 
 ### Evaluate the models.  Here's the evaluator (example:  rms.eval(pcc.lm, datasets, "pccement") ) 
-rms.eval <- function(model, datasets, prn=TRUE) {
+rms.eval <- function(model, datasets, prn=TRUE, outvar="pcc.rate") {
     ## Unlike the plotting function, this function wants a list with two datasets: training and testing (FIXME)
     if("glm" %in% class(model)) {
         train.pred   <- predict(object=model, newdata=datasets$training, type="response")
@@ -58,8 +58,8 @@ rms.eval <- function(model, datasets, prn=TRUE) {
         train.pred   <- predict(object=model, newdata=datasets$training)
         test.pred    <- predict(object=model, newdata=datasets$testing)
     }        
-    train.actual <- datasets$training$pccement
-    test.actual  <- datasets$testing$pccement
+    train.actual <- datasets$training[[outvar]]
+    test.actual  <- datasets$testing[[outvar]]
 
     train.err    <- sqrt(mean((train.actual - train.pred)^2))
     test.err     <- sqrt(mean((test.actual - test.pred)^2))
@@ -80,7 +80,7 @@ rms.eval <- function(model, datasets, prn=TRUE) {
 }
 
 
-scatterplot.model <- function(model, data, pal="Set1", sz=3) {
+scatterplot.model <- function(model, data, outvar="pcc.rate", pal="Set1", sz=3) {
     ## model is the object returned by a model fitting function like lm, glm, etc.
     ## data is a list of data frames that are themselves subsets of the master table
     ## pal is a palette designator.  It can be the name of a palette or a number 1-8.
@@ -92,7 +92,7 @@ scatterplot.model <- function(model, data, pal="Set1", sz=3) {
                           else {
                               c(predict(object=model, newdata=dat))
                           }
-                          act <- dat$pccement
+                          act <- dat[[outvar]]
                           data.frame(actual=act, model=pred)
                       })
     for(dset in names(pltdata))

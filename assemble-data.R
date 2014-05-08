@@ -99,6 +99,11 @@ working.table <- lapply(working.table,
                             gdpq    <- tbl$GDP / gdpshft
                             tbl$GDP.rate <- gdpq^(1/yd) - 1
 
+                            ## same for growth rate in per-capita cement
+                            pccshft <- c(rep(NA, lag), tbl$pccement[1:n])
+                            pccq    <- tbl$pccement / pccshft
+                            tbl$pcc.rate <- pccq^(1/yd)-1
+
                             ## five-year lagged per-capita production
                             tbl$pccement.lag5 <- c(rep(NA,lag), tbl$pccement[1:n]) 
                             tbl
