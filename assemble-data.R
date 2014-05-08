@@ -86,21 +86,21 @@ working.table <- lapply(working.table,
                             tbl$pccement.stock <- tbl$cement.stock / tbl$pop.tot
                             
                             ## compound annualized GDP growth rate
-                            ## over 5 years. Compute growth rate from
-                            ## lagged differences.  Allow for the
-                            ## possibility that there are missing
-                            ## years, in which case the averaging
-                            ## period won't be exactly 5 years.
-                            d  <- c(diff(tbl$GDP),NA)
-                            yd <- c(diff(tbl$year),NA)
-                            dr <- d/tbl$GDP
-                            r  <- (1+dr)**(1/yd) - 1
-                            tbl$GDP.rate <- c(NA,r[1:length(r)-1])
-
+                            ## over 5 years (trailing). Compute growth
+                            ## rate from lagged differences.  Allow
+                            ## for the possibility that there are
+                            ## missing years, in which case the
+                            ## averaging period won't be exactly 5
+                            ## years.
+                            lag     <- 5
+                            n       <- nrow(tbl)-lag
+                            gdpshft <- c(rep(NA, lag), tbl$GDP[1:n])
+                            yd      <- c(rep(NA, lag), diff(tbl$year, lag=lag)[1:n])
+                            gdpq    <- tbl$GDP / gdpshft
+                            tbl$GDP.rate <- gdpq^(1/yd) - 1
 
                             ## five-year lagged per-capita production
-                            n <- length(tbl$pccement)-5
-                            tbl$pccement.lag5 <- c(rep(NA,5), tbl$pccement[1:n]) 
+                            tbl$pccement.lag5 <- c(rep(NA,lag), tbl$pccement[1:n]) 
                             tbl
                         })
 
@@ -138,16 +138,23 @@ dput(master.table, file="cement-table.dat")
 ### This will only happen if the list of testing countries isn't
 ### present on the disk.  Otherwise we load the previously generated
 ### set.
-if(file.exists("testing-countries.dat")) {
-    testing.countries <- dget(file="testing-countries.dat")
-} else {
-    testing.countries <- with(list(countries=levels(as.factor(master.nonzero$ISO))),
-                              sample(countries, length(countries)/5))
+gen.test.countries <- function(frac=5, file=NULL) {
+    testing.countries <- with(list(countries=levels(as.factor(master.table$ISO))),
+                              sample(countries, length(countries)/frac))
     ## Make sure China is a testing country
     if(!"CHN" %in% testing.countries)
         testing.countries <- c(testing.countries, "CHN")
     comment(testing.countries) <- date()
-    dput(testing.countries, file="testing-countries.dat") 
+    if(!is.null(file))
+        dput(testing.countries, file=file)
+    testing.countries
 }
+
+if(file.exists("testing-countries.dat")) {
+    testing.countries <- dget(file="testing-countries.dat")
+} else {
+    testing.countries <- gen.test.countries(file="testing-countries.dat")
+}
+
 print("Testing countries are:")
 print(testing.countries)
