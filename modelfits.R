@@ -33,22 +33,16 @@ f.basic.d1   <- as.formula(pcc.rate~urban.growth + urban.pop + pcGDP + GDP.rate)
 f.basic.d2   <- as.formula(pcc.rate~(urban.growth + urban.pop + pcGDP + GDP.rate)^2)
 f.pcstock.d1 <- as.formula(pcc.rate~urban.growth + urban.pop + pcGDP + GDP.rate + pccement.stock)
 f.pcstock.d2 <- as.formula(pcc.rate~(urban.growth + urban.pop + pcGDP + GDP.rate + pccement.stock)^2)
-f.lag5.d1    <- as.formula(pcc.rate~urban.growth + urban.pop + pcGDP + GDP.rate + pccement.lag5)
-f.lag5.d2    <- as.formula(pcc.rate~(urban.growth + urban.pop + pcGDP + GDP.rate + pccement.lag5)^2)
 f.gdpr.d1    <- as.formula(pcc.rate~GDP.rate)
-f.gdpr.d2    <- as.formula(pcc.rate~GDP.rate+GDP.rate*GDP.rate)
 
 ## Linear regression
 basic.lm   <- lm(formula=f.basic.d1, data=datasets$training)
 basic.lm.d2<- lm(formula=f.basic.d2, data=datasets$training)
-lag5.lm    <- lm(formula=f.lag5.d2, data=datasets$training)
 pcstock.lm <- lm(formula=f.pcstock.d2, data=datasets$training)
 gdpr.lm.d1 <- lm(formula=f.gdpr.d1, data=datasets$training)
-gdpr.lm.d2 <- lm(formula=f.gdpr.d2, data=datasets$training)
 
 ## stepwise lr
 basic.lm.step   <- step(basic.lm.d2)
-lag5.lm.step    <- step(lag5.lm)
 pcstock.lm.step <- step(pcstock.lm)
 gdpr.lm.step       <- step(gdpr.lm.d2)
 
@@ -59,7 +53,6 @@ gdpr.lm.step       <- step(gdpr.lm.d2)
 ## Add some more:  regression trees, etc.
 ## regression tree - note regression trees can't do interaction terms, so we have to use the d1 version
 basic.rpart   <- rpart(formula=f.basic.d1, data=datasets$training)
-lag5.rpart    <- rpart(formula=f.lag5.d1, data=datasets$training)
 pcstock.rpart <- rpart(formula=f.pcstock.d1, data=datasets$training)
 gdpr.rpart    <- rpart(formula=f.gdpr.d1, data=datasets$training) # does this even make sense?
 
@@ -84,12 +77,6 @@ pcstock.earth.d3a <- earth(formula=f.pcstock.d1, data=datasets$training, degree=
 basic.earth.d1    <- earth(formula=f.basic.d1, data=datasets$training, degree=1)
 basic.earth.d2    <- earth(formula=f.basic.d1, data=datasets$training, degree=2, nk=64)
 basic.earth.d3    <- earth(formula=f.basic.d1, data=datasets$training, degree=3, nk=128)
-
-lag5.earth.d1     <- earth(formula=f.lag5.d1, data=datasets$training, degree=1)
-lag5.earth.d2     <- earth(formula=f.lag5.d1, data=datasets$training, degree=2, nk=128)
-lag5.earth.d2a    <- earth(formula=f.lag5.d1, data=datasets$training, degree=2, nk=128, nprune=15)
-lag5.earth.d3     <- earth(formula=f.lag5.d1, data=datasets$training, degree=3, nk=128)
-lag5.earth.d3a    <- earth(formula=f.lag5.d1, data=datasets$training, degree=3, nk=128, nprune=20)
 
 gdpr.earth.d1     <- earth(formula=f.gdpr.d1, data=datasets$training, degree=1)
 gdpr.earth.d2     <- earth(formula=f.gdpr.d1, data=datasets$training, degree=2)
@@ -133,4 +120,3 @@ cat("\nbasic (degree 2):\t\tbasic.earth.d2\n")
 print(rms.eval(basic.earth.d2, datasets, FALSE))
 cat("\nbasic (degree 3):\t\tbasic.earth.d3\n")
 print(rms.eval(basic.earth.d3, datasets, FALSE))
-

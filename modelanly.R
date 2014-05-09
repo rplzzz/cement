@@ -1,6 +1,8 @@
 
 
-
+####
+#### This function is out of date
+####
 ### For models that use lagged predictors, we can't evaluate the fit
 ### using the lagged actual predictors, so we need to go through the
 ### data sequentially for each country to construct the lagged model
@@ -166,5 +168,3 @@ cluster.boxplot <- function(cluster.obj, data,
         boxplot(formula=form, data=data, main=var, log=logp)
     }
 }
-
-    

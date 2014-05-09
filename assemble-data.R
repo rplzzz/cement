@@ -85,42 +85,25 @@ working.table <- lapply(working.table,
                             tbl$cement.stock <- cumsum(tbl$cement)
                             tbl$pccement.stock <- tbl$cement.stock / tbl$pop.tot
                             
-                            ## compound annualized GDP growth rate
-                            ## over 5 years (trailing). Compute growth
-                            ## rate from lagged differences.  Allow
-                            ## for the possibility that there are
-                            ## missing years, in which case the
-                            ## averaging period won't be exactly 5
-                            ## years.
+                            ## ratio of GDP to 5-years prior gdp.
+                            ## We're going to stick with trailing
+                            ## ratios for now, though arguably leading
+                            ## ratios might be better.
                             lag     <- 5
                             n       <- nrow(tbl)-lag
                             gdpshft <- c(rep(NA, lag), tbl$GDP[1:n])
                             yd      <- c(rep(NA, lag), diff(tbl$year, lag=lag)[1:n])
-                            gdpq    <- tbl$GDP / gdpshft
-                            tbl$GDP.rate <- gdpq^(1/yd) - 1
+                            tbl$GDP.rate <-
+                                log((tbl$GDP / gdpshft)^(lag/yd))
 
                             ## same for growth rate in per-capita cement
                             pccshft <- c(rep(NA, lag), tbl$pccement[1:n])
-                            pccq    <- tbl$pccement / pccshft
-                            tbl$pcc.rate <- pccq^(1/yd)-1
+                            tbl$pcc.rate <-
+                                log((tbl$pccement / pccshft)^(lag/yd))
 
-                            ## five-year lagged per-capita production
-                            tbl$pccement.lag5 <- c(rep(NA,lag), tbl$pccement[1:n]) 
-                            tbl
+                            tbl 
                         })
 
-
-## We want 20 years worth of accumulation in the cement stock.  Trim
-## any values before that.  -- NB: disabled. any calcs involving
-## cement stock will be questionable until we restore it.
-
-## working.table <- lapply(working.table,
-##                         function(tbl) {
-##                             if(length(tbl$year) < 20)
-##                                 NA
-##                             else
-##                                 data.frame(tbl[20:length(tbl$year),])
-##                         })
 
 ## Trim away all the data with NA values
 working.table <- lapply(working.table,

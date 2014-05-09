@@ -59,9 +59,11 @@ think that any of these countries consumed no cement at all.
     Units:  Kt C / billion 2005 US$<br>
     Source:  Internally calculated
 
-11. **GDP.rate**:  growth rate in total GDP<br>
+11. **GDP.rate**:  log of 5-year growth factor for total GDP<br>
     Units:  unitless<br>
-    Source:  Internally calcualted
+    Source:  Internally calcualted as log(GDP(t)/GDP(t-5)).  If there are
+    missing values, the growth factor from the nearest available
+    year is converted to a 5-year equivalent factor.
 
 12. **cement.stock**:  (very) loose proxy for the total stock of
     cement products to date.  It is calculated as the cumulative sum
@@ -73,9 +75,9 @@ think that any of these countries consumed no cement at all.
     Units:  Kt C/person<br>
     Source:  Internally calculated
 
-14. **pccement.lag5**:  per-capita cement lagged by 5 years<br>
-    Units:  Kt C/person<br>
-    Source:  Internally calculated
+14. **pcc.rate**:  log of 5-year growth factor for per-capita cement<br>
+    Units:  unitless<br>
+    Source:  Internally calculated using the same technique as for GDP.rate
 
 ## Analysis techniques
 
