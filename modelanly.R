@@ -107,6 +107,40 @@ scatterplot.model <- function(model, data, outvar="pcc.rate", pal="Set1", sz=3) 
                     stat_function(fun="identity", color="black", linetype=2, size=1) 
 }
 
+## Plot a box plot of the model residuals, grouped by another variable 
+boxplot.model.resid <- function(model, data, by, n=25, main="", outvar="pcc.rate") {
+    if("glm" %in% class(model))
+        resid <- predict(object=model, newdata=data, type="response") - data[[outvar]]
+    else
+        resid <- predict(object=model, newdata=data) - data[[outvar]]
+
+    if(is.factor(data[[by]]))
+        condition <- data[[by]]
+    else if(is.character(data[[by]]))
+        condition <- as.factor(data[[by]])
+    else {
+        x      <- data[[by]]
+        x0     <- min(x)
+        x1     <- max(x)
+
+        ## shift the lower end slightly so that x==x0 doesn't map to the nonexistent bin zero
+        eps    <- 1.0e-3
+        x0     <- (1+eps)*x0 - eps*x1
+        
+        width  <- (x1 - x0)/n
+        binlbl <- as.factor(signif(x0 + width*((1:n)+0.5), digits=2))
+        condition <- sapply(x, function(x){ binlbl[ceiling((x-x0)/width)] })
+    }
+
+    f <- data.frame(resid=resid, condition=condition)
+    colnames(f)[2] <- by
+    boxplot(formula=as.formula(paste("resid",by, sep='~')), data=f, xlab=by, ylab="resid", main=main)
+    abline(h=0, lty=2, lwd=2, col="magenta")
+}
+        
+    
+
+
 mk.country.data <- function(country.list, alldata) {
     sapply(country.list,
            function(country) {
