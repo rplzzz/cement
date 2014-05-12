@@ -66,8 +66,6 @@ master.table$cement[master.table$cement <= 0] <- NA
 ## per capita quantities
 master.table$pcGDP <- master.table$GDP / master.table$pop.tot
 master.table$pccement <- master.table$cement / master.table$pop.tot
-## Let's also try "cement intensity"
-master.table$cement.intensity <- master.table$cement / master.table$GDP
 
 ### For the remaining calculations we need to break up the tables by
 ### country
