@@ -29,6 +29,7 @@ names(datasets) <- c("training", "testing")
 ##  The fitted models are named after the type of the formula used.
 ##  We omit the degree unless we fit a couple of models of the same
 ##  type and different degree.
+f.gcam.d1    <- as.formula(pcc.rate~GDP.rate+0)
 f.simple.d1  <- as.formula(pcc.rate~GDP.rate)
 f.basic.d1   <- as.formula(pcc.rate~urban.growth + urban.pop + pcGDP + GDP.rate)
 f.basic.d2   <- as.formula(pcc.rate~(urban.growth + urban.pop + pcGDP + GDP.rate)^2)
@@ -37,6 +38,7 @@ f.pcstock.d2 <- as.formula(pcc.rate~(urban.growth + urban.pop + pcGDP + GDP.rate
 
 ### Linear regression
 ## simple.lm is the baseline model.  Beat that and you're "useful"
+gcam.lm     <- lm(formula=f.gcam.d1,    data=datasets$training) # the model actually (sort of) used in gcam
 simple.lm   <- lm(formula=f.simple.d1,  data=datasets$training)
 basic.lm    <- lm(formula=f.basic.d1,   data=datasets$training)
 basic.lm.d2 <- lm(formula=f.basic.d2,   data=datasets$training)
@@ -88,6 +90,8 @@ basic.earth.d3    <- earth(formula=f.basic.d1, data=datasets$training, degree=3,
 source("modelanly.R")
 
 cat("\n****************Linear models****************\n")
+cat("\ngcam:\t\tgcam.lm\n")
+print(rms.eval(gcam.lm, datasets, FALSE))
 cat("\nsimple:\t\tsimple.lm\n")
 print(rms.eval(simple.lm, datasets, FALSE))
 cat("\nbasic (degree=1):\t\tbasic.lm\n")
