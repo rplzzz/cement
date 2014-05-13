@@ -76,14 +76,23 @@ working.table <- cast(master.table.m, year~variable|ISO)
 
 ### Helper function to compute the log of the lagged growth factor.
 ### We will use this in the apply below.
-trailing.growth <- function(tbl, lag, var) {
+growth.fac <- function(tbl, lag, var, lead=FALSE) {
     n      <- nrow(tbl)-lag
-    shft   <- c(rep(NA, lag), tbl[[var]][1:n])
-    yd     <- c(rep(NA, lag), diff(tbl$year, lag=lag)[1:n])
+    shft   <- tbl[[var]]
+    yd     <- diff(tbl$year, lag=lag)
+    pad    <- rep(NA, lag)
+    if(lead) {
+        idx    <- (1:n)+lag
+        shft   <- c(shft[idx], pad)
+        yd     <- c(yd[idx],   pad)
+    }
+    else {
+        shft   <- c(pad, shft[1:n])
+        yd     <- c(pad, yd[1:n])
+    }
     ## return value
     log(tbl[[var]] / shft) * lag/yd
 }
-    
 
 working.table <- lapply(working.table,
                         function(tbl) {
@@ -99,23 +108,44 @@ working.table <- lapply(working.table,
                             ## ratios for now, though arguably leading
                             ## ratios might be better.
                             lag     <- 5
-                            tbl$GDP.rate <- trailing.growth(tbl, lag, "GDP")
-                            tbl$pcc.rate <- trailing.growth(tbl, lag, "pccement")
-                            tbl$pop.rate <- trailing.growth(tbl, lag, "pop.tot")
+                            tbl$GDP.rate <- growth.fac(tbl, lag, "GDP")
+                            tbl$pcc.rate <- growth.fac(tbl, lag, "pccement")
+                            tbl$pop.rate <- growth.fac(tbl, lag, "pop.tot")
 
-                            tbl 
+                            ## leading versions of the indicators above
+                            tbl$ld.GDP.rate <- growth.fac(tbl, lag, "GDP", TRUE)
+                            tbl$ld.pcc.rate <- growth.fac(tbl, lag, "pccement", TRUE)
+                            tbl$ld.pop.rate <- growth.fac(tbl, lag, "pop.tot", TRUE) 
+
+                            ## Figure out which rows have enough data to keep.
+                            ## These must be present
+                            mandatory <- c("year", "pop.tot", "urban.growth",
+                                           "cement", "GDP")
+                            ## at least one of these must be present.  
+                            opt <- c("GDP.rate", "ld.GDP.rate")
+                            ## Anything not mentioned in one of those
+                            ## lists is derivable from stuff that is
+                            ## mentioned, and thus doesn't need to be
+                            ## tested explicitly.
+                            
+                            data.mand <- apply(as.matrix(tbl[,mandatory]), 1,
+                                               function(r) {!any(is.na(r))})
+                            data.opt  <- apply(as.matrix(tbl[,opt]), 1,
+                                               function(r) {!all(is.na(r))})
+                            
+                            data.frame(tbl[data.mand & data.opt,])
                         })
 
 
-## Trim away all the data with NA values
-working.table <- lapply(working.table,
-                        function(tbl) {
-                            data.frame(tbl[complete.cases(tbl),])
-                        })
+## ## Trim away all the data with NA values
+## working.table <- lapply(working.table,
+##                         function(tbl) {
+##                             data.frame(tbl[complete.cases(tbl),])
+##                         })
 
 ## delete the countries that had insufficient data
 working.table[lapply(working.table, nrow)<10] <- NULL
-master.table.m <- melt(working.table, id="year") 
+master.table.m <- melt(working.table, id="year", na.rm=FALSE) 
 names(master.table.m)[names(master.table.m)=="L1"] <- "ISO"
 master.table <- cast(master.table.m,ISO+year~variable)
 

@@ -8,7 +8,10 @@ if(!exists("master.table")) master.table <- dget(file="cement-table.dat")
 ## Since the
 ## data are highly serially correlated, take only a single datum per
 ## five years from each country.  
-master.5yr <- master.table[master.table$year %% 5 == 1,]
+master.trailing.5yr <- master.table[master.table$year %% 5 == 1 &
+                                    !is.na(master.table$GDP.rate),]
+master.leading.5yr  <- master.table[master.table$year %% 5 == 1 &
+                                    !is.na(master.table$GDP.ld.rate),]
 
 
 ## Load the validation set.
@@ -16,7 +19,7 @@ if(!exists("testing.countries")) {
     testing.countries <- dget(file="testing-countries.dat")
 } 
 
-datasets <- split(master.5yr, master.5yr$ISO %in% testing.countries)
+datasets <- split(master.trailing.5yr, master.trailing.5yr$ISO %in% testing.countries)
 names(datasets) <- c("training", "testing")
 
 ### fit various per-capita cement models
