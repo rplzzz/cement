@@ -35,6 +35,7 @@ f.basic.d1   <- as.formula(pcc.rate~urban.growth + urban.pop + pcGDP + GDP.rate)
 f.basic.d2   <- as.formula(pcc.rate~(urban.growth + urban.pop + pcGDP + GDP.rate)^2)
 f.pcstock.d1 <- as.formula(pcc.rate~urban.growth + urban.pop + pcGDP + GDP.rate + pccement.stock)
 f.pcstock.d2 <- as.formula(pcc.rate~(urban.growth + urban.pop + pcGDP + GDP.rate + pccement.stock)^2)
+f.prate.d1   <- as.formula(pcc.rate~urban.growth + urban.pop + pcGDP + GDP.rate + pop.rate) 
 
 ### Linear regression
 ## simple.lm is the baseline model.  Beat that and you're "useful"
@@ -43,11 +44,12 @@ simple.lm   <- lm(formula=f.simple.d1,  data=datasets$training)
 basic.lm    <- lm(formula=f.basic.d1,   data=datasets$training)
 basic.lm.d2 <- lm(formula=f.basic.d2,   data=datasets$training)
 pcstock.lm  <- lm(formula=f.pcstock.d2, data=datasets$training)
+prate.lm    <- lm(formula=f.prate.d1,   data=datasets$training)
 
 
 ## stepwise lr (no point in using for simple, which has only a single predictor)
-basic.lm.step   <- step(basic.lm.d2)
-pcstock.lm.step <- step(pcstock.lm)
+## basic.lm.step   <- step(basic.lm.d2)
+## pcstock.lm.step <- step(pcstock.lm)
 
 ## generalized lm (lots more to do here)  # the specifications below won't work with pcc.rate
 ## pcstock.glm <- glm(formula=f.pcstock.d2, family=Gamma(link=log), data=datasets$training) 
@@ -58,6 +60,7 @@ pcstock.lm.step <- step(pcstock.lm)
 simple.rpart    <- rpart(formula=f.simple.d1,  data=datasets$training) 
 basic.rpart     <- rpart(formula=f.basic.d1,   data=datasets$training)
 pcstock.rpart   <- rpart(formula=f.pcstock.d1, data=datasets$training)
+prate.rpart     <- rpart(formula=f.prate.d1,   data=datasets$training)
 
 ## random forest
 simple.rf     <- randomForest(formula=f.simple.d1,  data=datasets$training)
@@ -86,6 +89,7 @@ basic.earth.d1    <- earth(formula=f.basic.d1, data=datasets$training, degree=1)
 basic.earth.d2    <- earth(formula=f.basic.d1, data=datasets$training, degree=2, nk=64)
 basic.earth.d3    <- earth(formula=f.basic.d1, data=datasets$training, degree=3, nk=128)
 
+prate.earth.d1    <- earth(formula=f.prate.d1, data=datasets$training, degree=1)
 
 source("modelanly.R")
 
@@ -98,11 +102,13 @@ cat("\nbasic (degree=1):\t\tbasic.lm\n")
 print(rms.eval(basic.lm, datasets, FALSE))
 cat("\nbasic (degree=2):\t\tbasic.lm.d2\n")
 print(rms.eval(basic.lm.d2, datasets, FALSE))
+cat("\nprate (degree=1):\t\tprate.lm\n")
+print(rms.eval(prate.lm, datasets, FALSE))
 
 
-cat("\n****************Stepwise linear models****************\n")
-cat("\nbasic:\t\tbasic.step\n")
-print(rms.eval(basic.lm.step, datasets, FALSE))
+## cat("\n****************Stepwise linear models****************\n")
+## cat("\nbasic:\t\tbasic.step\n")
+## print(rms.eval(basic.lm.step, datasets, FALSE))
 
 cat("\n****************Partition trees****************\n")
 cat("\nGDP rate (not sure if this even makes sense):\t\tsimple.rpart\n")
@@ -121,5 +127,5 @@ cat("\nbasic (degree 1):\t\tbasic.earth.d1\n")
 print(rms.eval(basic.earth.d1, datasets, FALSE))
 cat("\nbasic (degree 2):\t\tbasic.earth.d2\n")
 print(rms.eval(basic.earth.d2, datasets, FALSE))
-cat("\nbasic (degree 3):\t\tbasic.earth.d3\n")
-print(rms.eval(basic.earth.d3, datasets, FALSE))
+cat("\nprate (degree 1):\t\tprate.earth.d1\n")
+print(rms.eval(prate.earth.d1, datasets, FALSE))

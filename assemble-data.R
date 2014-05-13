@@ -68,11 +68,22 @@ master.table$pcGDP <- master.table$GDP / master.table$pop.tot
 master.table$pccement <- master.table$cement / master.table$pop.tot
 
 ### For the remaining calculations we need to break up the tables by
-### country
+### country 
 
 master.table$ISO <- factor(master.table$ISO) #get rid of unused levels
 master.table.m <- melt(master.table, id=c("ISO", "year", "Country"))
 working.table <- cast(master.table.m, year~variable|ISO)
+
+### Helper function to compute the log of the lagged growth factor.
+### We will use this in the apply below.
+trailing.growth <- function(tbl, lag, var) {
+    n      <- nrow(tbl)-lag
+    shft   <- c(rep(NA, lag), tbl[[var]][1:n])
+    yd     <- c(rep(NA, lag), diff(tbl$year, lag=lag)[1:n])
+    ## return value
+    log(tbl[[var]] / shft) * lag/yd
+}
+    
 
 working.table <- lapply(working.table,
                         function(tbl) {
@@ -88,16 +99,9 @@ working.table <- lapply(working.table,
                             ## ratios for now, though arguably leading
                             ## ratios might be better.
                             lag     <- 5
-                            n       <- nrow(tbl)-lag
-                            gdpshft <- c(rep(NA, lag), tbl$GDP[1:n])
-                            yd      <- c(rep(NA, lag), diff(tbl$year, lag=lag)[1:n])
-                            tbl$GDP.rate <-
-                                log((tbl$GDP / gdpshft)^(lag/yd))
-
-                            ## same for growth rate in per-capita cement
-                            pccshft <- c(rep(NA, lag), tbl$pccement[1:n])
-                            tbl$pcc.rate <-
-                                log((tbl$pccement / pccshft)^(lag/yd))
+                            tbl$GDP.rate <- trailing.growth(tbl, lag, "GDP")
+                            tbl$pcc.rate <- trailing.growth(tbl, lag, "pccement")
+                            tbl$pop.rate <- trailing.growth(tbl, lag, "pop.tot")
 
                             tbl 
                         })
