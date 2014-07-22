@@ -29,29 +29,33 @@ cluster.basic <- c("pccement",predictors.basic)
 ### and basket-case (i.e., failed states and other countries with
 ### highly erratic indicators)
 
-## use the daisy function to compute a distance matrix, mainly because
-## it can automatically standardize the variables, which presently
-## have very different magnitudes.  Using the manhattan metric on a
-## hunch.
-dist.full.cb <- daisy(master.table[,cluster.basic], metric="manhattan", stand=TRUE)
+mt.complete <- master.table[complete.cases(master.table[,cluster.basic]),cluster.basic]
 if(!exists("km.full.cb.5")) {             # don't compute it, if it's already been done
-    km.full.cb.5 <- kmeans(dist.full.cb, centers=5)
+    km.full.cb.5 <- kmeans(mt.complete, centers=5)
 }
 ## got one cluster that seemed like kind of a hodgepodge, so try 6 centers
 if(!exists("km.full.cb.6")) {
-    km.full.cb.6 <- kmeans(dist.full.cb, centers=6)
+    km.full.cb.6 <- kmeans(mt.complete, centers=6)
 }
 
 ## cluster on just the countries with nonzero production.  In keeping
 ## with our hypotheses above, this should require one fewer cluster
 ## than the ones above.
-dist.nonzero.cb <- daisy(master.nz[,cluster.basic],
-                         metric="manhattan", stand=TRUE)
+mnz.complete <- master.nz[complete.cases(master.nz[,cluster.basic]), cluster.basic]
 if(!exists("km.nonzero.cb.4")) {
-    km.nonzero.cb.4 <- kmeans(dist.nonzero.cb, centers=4)
+    km.nz.cb.4 <- kmeans(mnz.complete, centers=4)
 }
 if(!exists("km.nonzero.cb.5")) {
-    km.nonzero.cb.5 <- kmeans(dist.nonzero.cb, centers=5)
+    km.nz.cb.5 <- kmeans(mnz.complete, centers=5)
 }
 
 
+
+## use the daisy function to compute a distance matrix, mainly because
+## it can automatically standardize the variables, which presently
+## have very different magnitudes.  Using the manhattan metric on a
+## hunch. 
+dist.full.cb <- daisy(master.table[,cluster.basic], metric="manhattan", stand=TRUE)
+
+dist.nz.cb <- daisy(master.nz[,cluster.basic],
+                         metric="manhattan", stand=TRUE)
