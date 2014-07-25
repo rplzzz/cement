@@ -1,5 +1,13 @@
 require(cluster)
 
+
+clust.normalize <- function(data) {
+    for(name in names(data)) {
+        data[[name]] <- data[[name]] / max(abs(data[[name]]))
+    }
+    data
+}
+
 ## Do some clustering analysis on the data
 
 if(!exists("master.table")) master.table <- dget(file="cement-table.dat")
@@ -29,27 +37,33 @@ cluster.basic <- c("pccement",predictors.basic)
 ### and basket-case (i.e., failed states and other countries with
 ### highly erratic indicators)
 
-mt.complete <- master.table[complete.cases(master.table[,cluster.basic]),cluster.basic]
+master.complete <- clust.normalize(master.table[complete.cases(master.table[,cluster.basic]),cluster.basic])
 if(!exists("km.full.cb.5")) {             # don't compute it, if it's already been done
-    km.full.cb.5 <- kmeans(mt.complete, centers=5)
+    km.full.cb.5 <- kmeans(master.complete, centers=5)
 }
 ## got one cluster that seemed like kind of a hodgepodge, so try 6 centers
 if(!exists("km.full.cb.6")) {
-    km.full.cb.6 <- kmeans(mt.complete, centers=6)
+    km.full.cb.6 <- kmeans(master.complete, centers=6)
 }
 
 ## cluster on just the countries with nonzero production.  In keeping
 ## with our hypotheses above, this should require one fewer cluster
 ## than the ones above.
-mnz.complete <- master.nz[complete.cases(master.nz[,cluster.basic]), cluster.basic]
+master.nz.complete <- clust.normalize(master.nz[complete.cases(master.nz[,cluster.basic]), cluster.basic])
 if(!exists("km.nonzero.cb.4")) {
-    km.nz.cb.4 <- kmeans(mnz.complete, centers=4)
+    km.nz.cb.4 <- kmeans(master.nz.complete, centers=4)
 }
 if(!exists("km.nonzero.cb.5")) {
-    km.nz.cb.5 <- kmeans(mnz.complete, centers=5)
+    km.nz.cb.5 <- kmeans(master.nz.complete, centers=5)
 }
 
 
+## Re-fit the clustering using the trailing indicators
+trailing.basic <- c("GDP.rate", "pcc.rate", "pop.rate", "urban.growth", "urban.pop", "pcGDP")
+trailing.complete <- clust.normalize(master.table[complete.cases(master.table[,trailing.basic]),trailing.basic])
+km.trailing.4 <- kmeans(trailing.complete, centers=4)
+km.trailing.5 <- kmeans(trailing.complete, centers=5)
+km.trailing.6 <- kmeans(trailing.complete, centers=6)
 
 ## use the daisy function to compute a distance matrix, mainly because
 ## it can automatically standardize the variables, which presently
