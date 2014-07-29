@@ -1,0 +1,30 @@
+Notes on cement modeling
+========================================================
+
+Here are the best regression models we've come up with:
+
+```{r loaddata}
+source("modelfits.R")
+source("cluster.R")
+```
+The earth model with the basic parameters and degree 1 seems to be our best contender so far.  Here's the scatterplot:
+
+```{r scatterplot.earth.basic.d1}
+scatterplot.model(basic.earth.d1, datasets.trailing, sz=2)
+```
+
+The cluster results are also intriguing, but we haven't had a chance to do cross-validation on them yet.  Clustering on the trailing data with 5 clusters seems to produce the best results so far (but we haven't really looked at the 6-cluster data yet.)
+```{r cluster5}
+cmodel.trailing.5.d1 <- cluster.modelfit(km.trailing.5, complete.trailing, formula=f.basic.d1, fitfun=earth, degree=1)
+cmodel.trailing.5.d2 <- cluster.modelfit(km.trailing.5, complete.trailing, formula=f.basic.d1, fitfun=earth, degree=2)
+cat("cluster basic with trailing data (degree=1)\n")
+cluster.rms.eval(km.trailing.5, complete.trailing, cmodel.trailing.5.d1, prn=FALSE)
+cat("cluster basic with trailing data (degree=2)\n")
+cluster.rms.eval(km.trailing.5, complete.trailing, cmodel.trailing.5.d2, prn=FALSE)
+```
+
+The degree 2 looks slightly better, though that's without any cross-validation applied.  Here's the scatterplot:
+```{r cluster.scatterplot}
+cluster.scatterplot.model(km.trailing.5, complete.trailing, cmodel.trailing.5.d2, sz=2)
+```
+Ugh. The results change a bit every time because of the random starting condition in k-means.  Bleah.

@@ -17,3 +17,6 @@
 
 # figures directory
 fig/
+cache/
+figure/
+

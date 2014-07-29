@@ -201,3 +201,82 @@ cluster.boxplot <- function(cluster.obj, data,
         boxplot(formula=form, data=data, main=var, log=logp)
     }
 }
+
+
+### fit a separate model to the data in each cluster
+cluster.modelfit <- function(cluster.obj, data,
+                             formula=pcc.rate~GDP.rate,
+                             fitfun=lm, ...)
+{
+    cdata <- split(data, as.factor(cluster.obj$cluster))
+    lapply(cdata, function(d){fitfun(formula=formula, data=d, ...)})
+}
+
+
+### predict values for a dataset when a separate model has been fit
+### for each cluster (e.g. as returned by cluster.modelfit)
+cluster.predict <- function(clustid, data, modellist)
+{
+    cdata <- split(data, as.factor(clustid))
+    unsplit(
+        mapply(function(dat, model) {
+            if("glm" %in% class(model)) {predict(object=model, newdata=dat, type="response")}
+            else {predict(object=model, newdata=dat)}},
+               cdata, modellist, SIMPLIFY=FALSE),
+        clustid) 
+}
+
+
+### evaluate rms error for a model comprising a collection of cluster
+### submodels.  Unfortunately, this involves some duplication from
+### rms.eval
+cluster.rms.eval <- function(cluster.obj, data, modellist, testing.set=NULL, outvar="pcc.rate", prn=TRUE)
+{
+    data.split  <- split(data, data$ISO %in% testing.set)
+    clust.split <- split(cluster.obj$cluster, data$ISO %in%testing.set)
+    
+    train.pred   <- cluster.predict(clust.split$`FALSE`, data.split$`FALSE`, modellist)
+    train.actual <- data.split$`FALSE`[[outvar]]
+    train.err    <- sqrt(mean((train.pred-train.actual)^2))
+    train.maxloc <- which.max(abs(train.pred-train.actual))
+    train.max    <- train.pred[train.maxloc] - train.actual[train.maxloc]
+    if(prn) {
+        cat("\nmax error entry for training set:\n")
+        print(data.split$`FALSE`[train.maxloc,])
+    }
+    
+    if(!is.null(testing.set)) {
+        test.pred   <- cluster.predict(clust.split$`TRUE`, data.split$`TRUE`, modellist)
+        test.actual <- data.split$`TRUE`[[outvar]]
+        test.err    <- sqrt(mean((test.pred-test.actual)^2))
+        test.maxloc <- which.max(abs(test.pred-test.actual))
+        test.max    <- test.pred[test.maxloc] - test.actual[test.maxloc]
+        if(prn) {
+            cat("\nmax error entry for testing set:\n")
+            print(data.split$`TRUE`[test.maxloc,])
+        }
+    }
+    else {
+        test.err = 0
+        test.max = 0
+    }
+    
+    
+    c(training.rmserr=train.err, testing.rmserr=test.err,
+      training.maxerr=train.max, testing.max=test.max)
+      
+}
+
+### plot predicted vs. actual for cluster blah, blah, blah
+cluster.scatterplot.model <- function(cluster.obj, data, modellist, outvar="pcc.rate",
+                                      pal="Set1", sz=3)
+{
+    clustid <- cluster.obj$cluster
+    pred   <- cluster.predict(clustid, data, modellist)
+    actual <- data[[outvar]]
+    pdata <- data.frame(observed=actual, predicted=pred, cluster.id=as.factor(clustid))
+    ggplot(data=pdata, aes(x=observed, y=predicted, color=cluster.id)) +
+        geom_point(size=sz) + ggtitle("PCC growth rate: model vs. actual") +
+            scale_color_brewer(type="qual", palette=pal) +
+                stat_function(fun="identity", color="black", linetype=2, size=1)
+}
