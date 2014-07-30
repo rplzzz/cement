@@ -27,4 +27,10 @@ The degree 2 looks slightly better, though that's without any cross-validation a
 ```{r cluster.scatterplot}
 cluster.scatterplot.model(km.trailing.5, complete.trailing, cmodel.trailing.5.d2, sz=2)
 ```
-Ugh. The results change a bit every time because of the random starting condition in k-means.  Bleah.
+
+This actually looks a lot better, even allowing for not holding back any data for a testing set.  For one thing, the outputs aren't confined (mostly) between +/-1 like they are in the straight regression case.  A closer look suggests that only two of the clusters, group 3 and group 4, generated models with any real predictive power.  For the other groups you see the same horizontal character displayed in the regressions over the whole dataset.  Most of the improvement in the fit for these groups comes from the intercept term.  
+
+```{r cluster.anly}
+cluster.boxplot(km.trailing.5, complete.trailing, trailing.basic)
+clust.countries(complete.trailing, km.trailing.5$cluster)[c(3,4)]
+```

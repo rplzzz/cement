@@ -1,5 +1,8 @@
 require(cluster)
 
+## k-means uses a RNG.  
+set.seed(8675309)
+
 ####
 #### A bunch of utilities functions for working with clusters
 ####
