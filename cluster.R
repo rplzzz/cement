@@ -104,8 +104,8 @@ if(!exists("km.nonzero.cb.5")) {
 
 
 ## Re-fit the clustering using the trailing indicators
-trailing.basic <- c("GDP.rate", "pcc.rate", "pop.rate", "urban.growth", "urban.pop", "pcGDP")
-complete.trailing <- master.table[complete.cases(master.table[,trailing.basic]),]
+trailing.basic <- c("GDP.rate","pop.rate", "urban.growth", "urban.pop", "pcGDP")
+complete.trailing <- master.table[complete.cases(master.table[,c("pcc.rate",trailing.basic)]),]
 tc <- clust.normalize(complete.trailing[,trailing.basic])
 km.trailing.4 <- kmeans(tc, centers=4)
 km.trailing.5 <- kmeans(tc, centers=5)
