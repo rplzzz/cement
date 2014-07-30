@@ -28,6 +28,7 @@ country, two-letter, ISO, numerical
 "Bhutan","BT","BTN",64
 "Bolivia","BO","BOL",68
 "Bosnia and Herzegovina","BA","BIH",70
+"BosniaHerz","BA","BIH",70
 "Botswana","BW","BWA",72
 "Bouvet Island","BV","BVT",74
 "Brazil","BR","BRA",76
@@ -49,6 +50,7 @@ country, two-letter, ISO, numerical
 "Hong Kong, Special Administrative Region of China","HK","HKG",344
 "Hong Kong, China","HK","HKG",344
 "Hong Kong","HK","HKG",344
+"HongKong","HK","HKG",344
 "Macao, Special Administrative Region of China","MO","MAC",446
 "Macao, China","MO","MAC",446
 "Macao","MO","MAC",446
@@ -60,21 +62,26 @@ country, two-letter, ISO, numerical
 "Congo, Rep.","CG","COG",178
 "Congo, Democratic Republic of the","CD","COD",180
 "Congo, Dem. Rep.","CD","COD",180
+"CongoRep","CD","COD",180
 "Cook Islands","CK","COK",184
 "Costa Rica","CR","CRI",188
 "Côte d'Ivoire","CI","CIV",384
 "Cote d'Ivoire","CI","CIV",384
+"CoteIvoire","CI","CIV",384
 "Croatia","HR","HRV",191
 "Cuba","CU","CUB",192
 "Cyprus","CY","CYP",196
 "Czech Republic","CZ","CZE",203
+"Czech","CZ","CZE",203
 "Denmark","DK","DNK",208
 "Djibouti","DJ","DJI",262
 "Dominica","DM","DMA",212
 "Dominican Republic","DO","DOM",214
+"DominicanR","DO","DOM",214
 "Ecuador","EC","ECU",218
 "Egypt","EG","EGY",818
 "El Salvador","SV","SLV",222
+"ElSalvador","SV","SLV",222
 "Equatorial Guinea","GQ","GNQ",226
 "Eritrea","ER","ERI",232
 "Estonia","EE","EST",233
@@ -128,6 +135,7 @@ country, two-letter, ISO, numerical
 "Kiribati","KI","KIR",296
 "Korea, Democratic People's Republic of","KP","PRK",408
 "North Korea","KP","PRK",408
+"KoreaDPR","KP","PRK",408
 "Korea, Republic of","KR","KOR",410
 "South Korea","KR","KOR",410
 "Kuwait","KW","KWT",414
@@ -145,6 +153,7 @@ country, two-letter, ISO, numerical
 "Luxembourg","LU","LUX",442
 "Macedonia, Republic of","MK","MKD",807
 "Macedonia, FYR","MK","MKD",807
+"FYROM","MK","MKD",807
 "Madagascar","MG","MDG",450
 "Malawi","MW","MWI",454
 "Malaysia","MY","MYS",458
@@ -172,6 +181,7 @@ country, two-letter, ISO, numerical
 "Nepal","NP","NPL",524
 "Netherlands","NL","NLD",528
 "Netherlands Antilles","AN","ANT",530
+"NAntilles","AN","ANT",530
 "New Caledonia","NC","NCL",540
 "New Zealand","NZ","NZL",554
 "Nicaragua","NI","NIC",558
@@ -197,6 +207,7 @@ country, two-letter, ISO, numerical
 "Puerto Rico","PR","PRI",630
 "Qatar","QA","QAT",634
 "Réunion","RE","REU",638
+"Reunion","RE","REU",638
 "Romania","RO","ROU",642
 "Russian Federation","RU","RUS",643
 "Russia","RU","RUS",643
@@ -240,6 +251,7 @@ country, two-letter, ISO, numerical
 "Syrian Arab Republic","SY","SYR",760
 "Syria","SY","SYR",760
 "Taiwan, Republic of China","TW","TWN",158
+"Taiwan","TW","TWN",158
 "Tajikistan","TJ","TJK",762
 "Tanzania, United Republic of","TZ","TZA",834
 "Tanzania","TZ","TZA",834
@@ -257,9 +269,12 @@ country, two-letter, ISO, numerical
 "Uganda","UG","UGA",800
 "Ukraine","UA","UKR",804
 "United Arab Emirates","AE","ARE",784
+"UAE","AE","ARE",784
 "United Kingdom","GB","GBR",826
+"UK","GB","GBR",826
 "United States of America","US","USA",840
 "United States","US","USA",840
+"USA","US","USA",840
 "United States Minor Outlying Islands","UM","UMI",581
 "Uruguay","UY","URY",858
 "Uzbekistan","UZ","UZB",860
