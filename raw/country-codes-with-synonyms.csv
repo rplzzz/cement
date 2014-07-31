@@ -61,7 +61,7 @@ country, two-letter, ISO, numerical
 "Congo, Rep.","CG","COG",178
 "Congo, Democratic Republic of the","CD","COD",180
 "Congo, Dem. Rep.","CD","COD",180
-"CongoRep","CD","COD",180
+"Congo, DRC","CD","COD",180
 "Cook Islands","CK","COK",184
 "Costa Rica","CR","CRI",188
 "Côte d'Ivoire","CI","CIV",384
@@ -260,6 +260,7 @@ country, two-letter, ISO, numerical
 "Tokelau","TK","TKL",772
 "Tonga","TO","TON",776
 "Trinidad and Tobago","TT","TTO",780
+"Trinidad","TT","TTO",780
 "Tunisia","TN","TUN",788
 "Turkey","TR","TUR",792
 "Turkmenistan","TM","TKM",795
