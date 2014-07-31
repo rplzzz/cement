@@ -2,66 +2,14 @@ require(cluster)
 
 ## k-means uses a RNG.  
 set.seed(8675309)
-
-####
-#### A bunch of utilities functions for working with clusters
-####
-
-clust.normalize <- function(data) {
-    for(name in names(data)) {
-        data[[name]] <- data[[name]] / max(abs(data[[name]]))
-    }
-    data
+if(!exists("clust.normalize")) {
+    source("cement-util.R")
 }
-
-### Find the countries in each of the clusters
-clust.countries <- function(data, clustid) {
-    clusters <- split(data,clustid)
-    lapply(clusters, function(d) {unique(sort.int(d$ISO, method="quick"))})
-}
-
-### Find the data entries in a cluster
-clust.members <- function(data, clustid) {
-    data$ID <- rownames(data)
-    clusters <- split(data, clustid)
-    lapply(clusters, function(d) {d$ID})
-}
-
-
-### Find the clusters that contain a country.  There may be
-### more than one because each country has several years of data
-clust.srch <- function(iso, country.list) {
-    sapply(country.list, function(l) {iso %in% l})
-}
-
-### Similarity measure for cluster member lists (will work for country lists too)
-mlist.sim <- function(cl1, cl2) {
-    ## Edit distance is the number in 1 not in 2, plus number in 2 not in 1
-    sum(!(cl1 %in% cl2)) + sum(!(cl2 %in% cl1))
-}
-
-### Matrix of edit distances for two lists of cluster memberships (as
-### produced by clust.members or clust.countries)
-mlist.sim.matrix <- function(cm1, cm2) {
-    ## The elements of cm1 are represented on the rows of the matrix,
-    ## and the elements of cm2 on the columns
-    matrix(
-        sapply(cm2, function(c2) {sapply(cm1, function(c1) {mlist.sim(c2,c1)})}),
-        nrow= length(cm1))
-}
-
 
 ## Do some clustering analysis on the data
 
 if(!exists("master.table")) master.table <- dget(file="cement-table.dat")
 if(!exists("testing.countries")) testing.countries <- dget(file="testing-countries.dat")
-
-### create a version that has the zero entries filtered out.  This is
-### slightly different than the one created in modelfits.R, so we
-### choose a different name. 
-### TODO gather all this junk up into functions so we don't have such
-### a polluted namespace.
-master.nz <- master.table[master.table$cement>0,]
 
 ### make some split datasets, in case we want to do cross-validation
 datasets.full <- split(master.table, master.table$ISO %in% testing.countries)

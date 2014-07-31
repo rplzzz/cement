@@ -113,7 +113,7 @@ prate.earth.d1    <- earth(formula=f.prate.d1, data=datasets.trailing$training, 
 lbasic.earth.d1    <- earth(formula=fl.basic.d1, data=datasets.leading$training, degree=1)
 lprate.earth.d1    <- earth(formula=fl.prate.d1, data=datasets.leading$training, degree=1)
 
-source("modelanly.R")
+source("cement-util.R")
 
 cat("\n****************Linear models****************\n")
 cat("\ngcam:\t\tgcam.lm\n")

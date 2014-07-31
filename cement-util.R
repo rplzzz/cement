@@ -1,4 +1,28 @@
+require(reshape)
 
+####
+#### Various functions for working with the cement data and models
+#### based on it.
+####
+
+### General functions
+
+datefix <- function(dd) {as.numeric(substr(as.character(dd),2,5))}
+select.complete <- function(dd) {dd[complete.cases(dd),]}
+to.ISO <- function(dd) {
+    dd$country <- tolower(dd$country)
+    subset(merge(dd, ccodes, by="country", all.x=TRUE), select= -c(two.letter, numerical, country))
+}
+reorg.by.yr <- function(dd, name) {
+    dd.m <- melt(dd, variable="xyear")
+    names(dd.m)[names(dd.m)=="value"] <- name
+    dd.m$year <- datefix(dd.m$xyear)
+    dd.m$xyear <- NULL
+    dd.m
+}
+
+
+### Model analysis
 
 ####
 #### This function is out of date
@@ -155,6 +179,48 @@ problem.countries <- c("ARE", "CYP", "LUX", "OMN", "SAU", "SVN")
 
 
 #### functions for plotting and analyzing cluster analyses
+
+clust.normalize <- function(data) {
+    for(name in names(data)) {
+        data[[name]] <- data[[name]] / max(abs(data[[name]]))
+    }
+    data
+}
+
+### Find the countries in each of the clusters
+clust.countries <- function(data, clustid) {
+    clusters <- split(data,clustid)
+    lapply(clusters, function(d) {unique(sort.int(d$ISO, method="quick"))})
+}
+
+### Find the data entries in a cluster
+clust.members <- function(data, clustid) {
+    data$ID <- rownames(data)
+    clusters <- split(data, clustid)
+    lapply(clusters, function(d) {d$ID})
+} 
+
+### Find the clusters that contain a country.  There may be
+### more than one because each country has several years of data
+clust.srch <- function(iso, country.list) {
+    sapply(country.list, function(l) {iso %in% l})
+}
+
+### Similarity measure for cluster member lists (will work for country lists too)
+mlist.sim <- function(cl1, cl2) {
+    ## Edit distance is the number in 1 not in 2, plus number in 2 not in 1
+    sum(!(cl1 %in% cl2)) + sum(!(cl2 %in% cl1))
+}
+
+### Matrix of edit distances for two lists of cluster memberships (as
+### produced by clust.members or clust.countries)
+mlist.sim.matrix <- function(cm1, cm2) {
+    ## The elements of cm1 are represented on the rows of the matrix,
+    ## and the elements of cm2 on the columns
+    matrix(
+        sapply(cm2, function(c2) {sapply(cm1, function(c1) {mlist.sim(c2,c1)})}),
+        nrow= length(cm1))
+}
 
 ### make a data frame of the cluster centroids
 cluster.centroids <- function(cluster.obj, data) {

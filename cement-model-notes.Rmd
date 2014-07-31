@@ -4,32 +4,97 @@ Notes on cement modeling
 Here are the best regression models we've come up with:
 
 ```{r loaddata}
-source("modelfits.R")
-source("cluster.R")
+source("cement-util.R")
+master.table <- dget(file="cement-table.dat")
+testing.countries <- dget(file="testing-countries.dat")
+set.seed(8675309)
+#options(width=160)
 ```
+
+Cluster with and without the modified population density.  Well use 4-5 clusters for the basic, 4-6 for the population density:
+
+```{r docluster, cache=TRUE}
+basic.predictors <- c("GDP.rate", "pcGDP", "urban.growth", "urban.pop", "pop.rate")
+pden.predictors  <- c(basic.predictors, "pop.den")
+## List of vars that includes the output variable.  We need that to filter the master 
+## table appropriately
+basic.fullvars <- c(basic.predictors, "pcc.rate")
+pden.fullvars  <- c(pden.predictors, "pcc.rate")
+
+basic.table <- select.complete(master.table[,basic.fullvars])
+basic.normalized <- clust.normalize(basic.table[,basic.predictors])
+km.basic.4 <- kmeans(basic.normalized, centers=4)
+km.basic.5 <- kmeans(basic.normalized, centers=5)
+
+pden.table <- select.complete(master.table[,pden.fullvars])
+pden.normalized <- clust.normalize(pden.table[,pden.predictors])
+km.pden.4 <- kmeans(pden.normalized, centers=4)
+km.pden.5 <- kmeans(pden.normalized, centers=5)
+km.pden.6 <- kmeans(pden.normalized, centers=6)
+```
+
+Show the boxplots for the clusters, to give us an idea of what they cover.  Note we include the output variable, even if we didn't cluster on it  Clusters with basic vars:
+
+```{r clustplot.basic, fig.width=10}
+cluster.boxplot(km.basic.4, basic.table, basic.fullvars)
+cluster.boxplot(km.basic.5, basic.table, basic.fullvars)
+```
+
+Clusters including (modified) population density:
+```{r clustplot.pden, fig.width=10, fig.height=10}
+cluster.boxplot(km.pden.4, pden.table, pden.fullvars)
+cluster.boxplot(km.pden.5, pden.table, pden.fullvars)
+cluster.boxplot(km.pden.6, pden.table, pden.fullvars)
+```
+
+How similar are these clusters?  Check the similarity matrices
+```{r simmatrix}
+basic.members.4 <- clust.members(basic.table, km.basic.4$cluster)
+basic.members.5 <- clust.members(basic.table, km.basic.5$cluster)
+mlist.sim.matrix(basic.members.4, basic.members.4)
+mlist.sim.matrix(basic.members.5, basic.members.5)
+mlist.sim.matrix(basic.members.4, basic.members.5)
+
+pden.members.4 <- clust.members(pden.table, km.pden.4$cluster)
+pden.members.5 <- clust.members(pden.table, km.pden.5$cluster)
+pden.members.6 <- clust.members(pden.table, km.pden.6$cluster)
+mlist.sim.matrix(pden.members.4, pden.members.4)
+mlist.sim.matrix(pden.members.5, pden.members.5)
+mlist.sim.matrix(pden.members.6, pden.members.6)
+mlist.sim.matrix(pden.members.4, pden.members.5)
+mlist.sim.matrix(pden.members.4, pden.members.6)
+mlist.sim.matrix(pden.members.5, pden.members.6)
+```
+
+```{r fitmodels}
+## same as basic.predictors and pden.predictors above, but expressed as a formula
+basic.f <- pcc.rate~GDP.rate + pcGDP + urban.growth + urban.pop + pop.rate
+pden.f  <- pcc.rate~pcGDP + GDP.rate + urban.growth + urban.pop + pop.rate + pop.den
+```
+
 The earth model with the basic parameters and degree 1 seems to be our best contender so far.  Here's the scatterplot:
 
 ```{r scatterplot.earth.basic.d1}
-scatterplot.model(basic.earth.d1, datasets.trailing, sz=2)
+#scatterplot.model(basic.earth.d1, datasets.trailing, sz=2)
 ```
 
 The cluster results are also intriguing, but we haven't had a chance to do cross-validation on them yet.  Clustering on the trailing data with 5 clusters seems to produce the best results so far (but we haven't really looked at the 6-cluster data yet.)
 ```{r cluster5}
-cmodel.trailing.5.d1 <- cluster.modelfit(km.trailing.5, complete.trailing, formula=f.basic.d1, fitfun=earth, degree=1)
-cmodel.trailing.5.d2 <- cluster.modelfit(km.trailing.5, complete.trailing, formula=f.basic.d1, fitfun=earth, degree=2)
-cat("cluster basic with trailing data (degree=1)\n")
-cluster.rms.eval(km.trailing.5, complete.trailing, cmodel.trailing.5.d1, prn=FALSE)
-cat("cluster basic with trailing data (degree=2)\n")
-cluster.rms.eval(km.trailing.5, complete.trailing, cmodel.trailing.5.d2, prn=FALSE)
+#cmodel.trailing.5.d1 <- cluster.modelfit(km.trailing.5, complete.trailing, formula=f.basic.d1, fitfun=earth, degree=1)
+#cmodel.trailing.5.d2 <- cluster.modelfit(km.trailing.5, complete.trailing, formula=f.basic.d1, fitfun=earth, degree=2)
+#cat("cluster basic with trailing data (degree=1)\n")
+#cluster.rms.eval(km.trailing.5, complete.trailing, cmodel.trailing.5.d1, prn=FALSE)
+#cat("cluster basic with trailing data (degree=2)\n")
+#cluster.rms.eval(km.trailing.5, complete.trailing, cmodel.trailing.5.d2, prn=FALSE)
 ```
 
 The degree 2 looks slightly better, though that's without any cross-validation applied.  Here's the scatterplot:
 ```{r cluster.scatterplot}
-cluster.scatterplot.model(km.trailing.5, complete.trailing, cmodel.trailing.5.d2, sz=2)
+#cluster.scatterplot.model(km.trailing.5, complete.trailing, cmodel.trailing.5.d2, sz=2)
 ```
 
 What a mess.  Before we were including the output variable in the clustering, so we were getting models on the back end that basically just used intercepts to adjust the mean output value in each cluster.  Take away that extra knowledge, and...  
 
 ```{r cluster.anly}
-cluster.boxplot(km.trailing.5, complete.trailing, c(trailing.basic,"pcc.rate"))
+#cluster.boxplot(km.trailing.5, complete.trailing, c(trailing.basic,"pcc.rate"))
 ```

@@ -1,19 +1,5 @@
-require(reshape)
+source("cement-util.R")
 
-
-datefix <- function(dd) {as.numeric(substr(as.character(dd),2,5))}
-select.complete <- function(dd) {dd[complete.cases(dd),]}
-to.ISO <- function(dd) {
-    dd$country <- tolower(dd$country)
-    subset(merge(dd, ccodes, by="country", all.x=TRUE), select= -c(two.letter, numerical, country))
-}
-reorg.by.yr <- function(dd, name) {
-    dd.m <- melt(dd, variable="xyear")
-    names(dd.m)[names(dd.m)=="value"] <- name
-    dd.m$year <- datefix(dd.m$xyear)
-    dd.m$xyear <- NULL
-    dd.m
-}
 
 ## Country code lookup table.  Some tables need this, some don't
 ccodes <- read.csv("raw/country-codes-with-synonyms.csv", comment.char='#')
@@ -59,6 +45,15 @@ pop.tot$Region <- NULL
 pop.tot$Sex <- NULL
 pop.tot$Scenario <- NULL
 master.table <- merge(pop.tot, master.table)
+
+## Modified population density.  This is the population density when
+## you exclude a country's mostly unpopulated areas.  The data appears
+## to exist only for the present day, and possibly not for all the
+## countries we normally look at, so it's not clear how well it's
+## going to work.
+pop.den <- to.ISO(read.csv("raw/modified-pop-den.csv"))
+master.table <- merge(pop.den, master.table, by="ISO")
+
 
 ## Treat 0 cement values as missing
 master.table$cement[master.table$cement <= 0] <- NA
