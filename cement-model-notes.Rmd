@@ -1,3 +1,7 @@
+---
+output:
+  html_document: default
+---
 Notes on cement modeling
 ========================================================
 
@@ -11,7 +15,6 @@ master.table <- dget(file="cement-table.dat")
 master.table <- master.table[master.table$year %% 5 == 1,]
 testing.countries <- dget(file="testing-countries.dat")
 set.seed(8675309)
-#options(width=160)
 ```
 
 Cluster with and without the modified population density.  Well use 4-5 clusters for the basic, 4-6 for the population density:
@@ -21,9 +24,9 @@ basic.predictors <- c("GDP.rate", "pcGDP", "urban.growth", "urban.pop", "pop.rat
 pden.predictors  <- c(basic.predictors, "pop.den")
 ## Lists of vars that include the output variable and the ISO code.  We need these to 
 ## filter the master table appropriately
-basic.fullvars <- c(basic.predictors, "pcc.rate", "ISO")
+basic.fullvars <- c(basic.predictors, "pcc.rate", "ISO", "year")
 basic.numvars  <- c(basic.predictors, "pcc.rate")
-pden.fullvars  <- c(pden.predictors, "pcc.rate", "ISO")
+pden.fullvars  <- c(pden.predictors, "pcc.rate", "ISO", "year")
 pden.numvars   <- c(basic.predictors, "pcc.rate")
 
 basic.table <- select.complete(master.table[,basic.fullvars])
@@ -109,13 +112,13 @@ scatterplot.model(basic.earth.d1, basic.split, sz=2)
 The cluster results are also intriguing. Cross-validation is complicated by the fact that the testing countries don't fall evenly across the clusters, so we've only done it in a limited way.
 
 ```{r cluster5}
-cmodel.basic.5.lm <- cluster.modelfit(km.basic.5, basic.table, formula=basic.f, fitfun=lm, testset=testing.countries)
-cmodel.basic.5.d1 <- cluster.modelfit(km.basic.5, basic.table, formula=basic.f, fitfun=earth, degree=1)
-cmodel.basic.5.d1alt <- cluster.modelfit(km.basic.5, basic.table, formula=basic.f, fitfun=earth, testset=testing.countries, degree=1)
-cmodel.basic.5.d2 <- cluster.modelfit(km.basic.5, basic.table, formula=basic.f, fitfun=earth, degree=2)
-cmodel.pden.5.lm <- cluster.modelfit(km.pden.5, pden.table, formula=pden.f, fitfun=lm, testset=testing.countries)
-cmodel.pden.5.d1 <- cluster.modelfit(km.pden.5, pden.table, formula=pden.f, fitfun=earth, degree=1)
-cmodel.pden.5.d2 <- cluster.modelfit(km.pden.5, pden.table, formula=pden.f, fitfun=earth, degree=2)
+cmodel.basic.5.lm <- cluster.regression(km.basic.5, basic.table, formula=basic.f, fitfun=lm, testset=testing.countries)
+cmodel.basic.5.d1 <- cluster.regression(km.basic.5, basic.table, formula=basic.f, fitfun=earth, degree=1)
+cmodel.basic.5.d1alt <- cluster.regression(km.basic.5, basic.table, formula=basic.f, fitfun=earth, testset=testing.countries, degree=1)
+cmodel.basic.5.d2 <- cluster.regression(km.basic.5, basic.table, formula=basic.f, fitfun=earth, degree=2)
+cmodel.pden.5.lm <- cluster.regression(km.pden.5, pden.table, formula=pden.f, fitfun=lm, testset=testing.countries)
+cmodel.pden.5.d1 <- cluster.regression(km.pden.5, pden.table, formula=pden.f, fitfun=earth, degree=1)
+cmodel.pden.5.d2 <- cluster.regression(km.pden.5, pden.table, formula=pden.f, fitfun=earth, degree=2)
 
 cluster.rms.eval(km.basic.5, basic.table, cmodel.basic.5.lm, prn=FALSE, testing.set=testing.countries)
 cluster.rms.eval(km.basic.5, basic.table, cmodel.basic.5.d1, prn=FALSE, testing.set=testing.countries)
@@ -127,20 +130,67 @@ cluster.rms.eval(km.pden.5, pden.table, cmodel.pden.5.d1, prn=FALSE, testing.set
 cluster.rms.eval(km.pden.5, pden.table, cmodel.pden.5.d2, prn=FALSE, testing.set=testing.countries)
 ```
 
-The degree 2 looks slightly better, though that's without any cross-validation applied.  Here are the scatterplots:
+The degree 2 looks slightly better.  Here are the scatterplots:
 
 ```{r cluster.scatterplot}
 cluster.scatterplot.model(km.basic.5, basic.table, cmodel.basic.5.d2, sz=2)
 cluster.scatterplot.model(km.pden.5, pden.table, cmodel.pden.5.d2, sz=2)
 ```
 
-The degree 2 fits look a little suspect.  Clusters 2 and 4 are being fit mostly by the intercept term.
+The degree 2 fits look a little suspect.  Clusters 2 and 4 (basic) are being fit mostly by the intercept term.  Likewise cluster 5 in the pden version.
 
 How do the models differ with and without the clustering (and with different versions of the clustering)?  Here are the model summaries for the straight linear model.
 
 ```{r model.summaries}
 summary(basic.lm)
 lapply(cmodel.basic.5.lm, summary)
-#lapply(cmodel.basic.5.d1alt, summary)
 lapply(cmodel.pden.5.lm, summary)
 ```
+
+Interesting.  It looks like GDP.rate is the only one that is consistently significant.  That isn't too surprising.  Much of the information in the other variables has been extracted by the clustering process.  This suggests a new approach:  cluster on the indicators excluding GDP.rate, then fit a simple model with just GDP.rate (possibly including an intercept) to each cluster.
+
+```{r simple.clustering, fig.width=10, fig.height=8}
+simple.clustervars <- c("pcGDP", "urban.growth", "urban.pop", "pop.rate")
+simple.extravars   <- c("GDP.rate", "pcc.rate")
+simple.plotvars    <- c(simple.clustervars, simple.extravars)
+simple.f           <- pcc.rate ~ GDP.rate
+
+pden.clustervars   <- c("pcGDP", "urban.growth", "urban.pop", "pop.rate", "pop.den")
+pden.extravars     <- simple.extravars
+pden.plotvars      <- c(pden.clustervars, pden.extravars)
+pden.f             <- simple.f
+
+simple <- cluster.model(master.table, simple.clustervars, simple.extravars, simple.f, 5,
+                                   testset=testing.countries)
+pden   <- cluster.model(master.table, pden.clustervars, pden.extravars, pden.f, 5,
+                                   testset=testing.countries)
+
+cluster.boxplot(simple$km, simple$table, simple.plotvars)
+cluster.boxplot(pden$km, pden$table, pden.plotvars)
+```
+
+Encouraging.  We don't get any clusters that have all the low-growth or high-growth entries like we did before.  Let's see how the models do.
+
+```{r simple.modeling}
+cluster.rms.eval(simple$km, simple$table, simple$model, testing.set=testing.countries)
+cluster.rms.eval(pden$km, pden$table, pden$model, testing.set=testing.countries)
+cluster.scatterplot.model(simple$km, simple$table, simple$model, sz=2)
+cluster.scatterplot.model(pden$km, pden$table, pden$model, sz=2)
+```
+
+So, it's slightly better than the unclustered linear model (as measured by RMS error), but not hugely so.  Including the population density seems to make no discernible difference, so we'll drop it from here on.  Let's see the model coefficients.
+
+```{r simple.coefs}
+lapply(simple$model, summary)
+```
+
+Notice that some of them are similar to the ones we got from the basic.lm model, while others are rather different.  What does it mean in practice?  Let's take China as an example:
+
+```{r chn.example}
+sel   <- simple$table$ISO == "CHN"
+clust <- simple$km$cluster[sel]
+coef  <- sapply(clust, function(c) {simple$model[[c]]$coefficients["GDP.rate"]})
+data.frame(simple$table[sel,c("ISO","year")], cluster=clust, GDP.rate.coef=coef)
+```
+
+So, sometime around 2000 China moves from group 4 (roughly speaking:  poor, lightly urbanized countries) to group 1 (roughly speaking:  )

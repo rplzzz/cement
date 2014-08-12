@@ -270,7 +270,7 @@ cluster.boxplot <- function(cluster.obj, data,
 
 
 ### fit a separate model to the data in each cluster
-cluster.modelfit <- function(cluster.obj, data,
+cluster.regression <- function(cluster.obj, data,
                              formula=pcc.rate~GDP.rate,
                              fitfun=lm, testset=NULL,
                              ...)
@@ -283,8 +283,23 @@ cluster.modelfit <- function(cluster.obj, data,
 }
 
 
+### perform clustering and fit cluster regression
+cluster.model <- function(data, clustvars, extravars, formula, centers, fitfun=lm,
+                          testset=NULL, ...)
+{
+    allvars          <- c(clustvars, extravars, "ISO", "year")
+    raw.table        <- select.complete(data[,allvars])
+    normalized.table <- clust.normalize(raw.table[,clustvars])
+    km               <- kmeans(normalized.table, centers=centers)
+    model            <- cluster.regression(km, raw.table, formula, fitfun, testset, ...)
+
+    list(table=raw.table, km=km, model=model)
+}
+    
+
+
 ### predict values for a dataset when a separate model has been fit
-### for each cluster (e.g. as returned by cluster.modelfit)
+### for each cluster (e.g. as returned by cluster.regression)
 cluster.predict <- function(clustid, data, modellist)
 {
     cdata <- split(data, as.factor(clustid))
@@ -350,3 +365,5 @@ cluster.scatterplot.model <- function(cluster.obj, data, modellist, outvar="pcc.
             scale_color_brewer(type="qual", palette=pal) +
                 stat_function(fun="identity", color="black", linetype=2, size=1)
 }
+
+
