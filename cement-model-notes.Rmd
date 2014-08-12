@@ -193,4 +193,6 @@ coef  <- sapply(clust, function(c) {simple$model[[c]]$coefficients["GDP.rate"]})
 data.frame(simple$table[sel,c("ISO","year")], cluster=clust, GDP.rate.coef=coef)
 ```
 
-So, sometime around 2000 China moves from group 4 (roughly speaking:  poor, lightly urbanized countries) to group 1 (roughly speaking:  )
+So, sometime around 2000 China moves from group 4 (roughly speaking:  poor, lightly urbanized countries) to group 1 (roughly speaking:  middle-income, urbanizing countries), and the coefficient for its GDP growth rate becomes a lot smaller.
+
+Note that the coefficient doesn't tell the whole story.  Group 5, comprising the rich countries, has a large coefficient, but its GDP growth rates are lower, so you get slightly lower per-capita cement growth rates in those countries.
