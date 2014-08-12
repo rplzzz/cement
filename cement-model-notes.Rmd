@@ -4,8 +4,11 @@ Notes on cement modeling
 Here are the best regression models we've come up with:
 
 ```{r loaddata}
+require(earth)
+require(ggplot2)
 source("cement-util.R")
 master.table <- dget(file="cement-table.dat")
+master.table <- master.table[master.table$year %% 5 == 1,]
 testing.countries <- dget(file="testing-countries.dat")
 set.seed(8675309)
 #options(width=160)
@@ -13,13 +16,15 @@ set.seed(8675309)
 
 Cluster with and without the modified population density.  Well use 4-5 clusters for the basic, 4-6 for the population density:
 
-```{r docluster, cache=TRUE}
+```{r docluster}
 basic.predictors <- c("GDP.rate", "pcGDP", "urban.growth", "urban.pop", "pop.rate")
 pden.predictors  <- c(basic.predictors, "pop.den")
-## List of vars that includes the output variable.  We need that to filter the master 
-## table appropriately
-basic.fullvars <- c(basic.predictors, "pcc.rate")
-pden.fullvars  <- c(pden.predictors, "pcc.rate")
+## Lists of vars that include the output variable and the ISO code.  We need these to 
+## filter the master table appropriately
+basic.fullvars <- c(basic.predictors, "pcc.rate", "ISO")
+basic.numvars  <- c(basic.predictors, "pcc.rate")
+pden.fullvars  <- c(pden.predictors, "pcc.rate", "ISO")
+pden.numvars   <- c(basic.predictors, "pcc.rate")
 
 basic.table <- select.complete(master.table[,basic.fullvars])
 basic.normalized <- clust.normalize(basic.table[,basic.predictors])
@@ -36,15 +41,15 @@ km.pden.6 <- kmeans(pden.normalized, centers=6)
 Show the boxplots for the clusters, to give us an idea of what they cover.  Note we include the output variable, even if we didn't cluster on it  Clusters with basic vars:
 
 ```{r clustplot.basic, fig.width=10}
-cluster.boxplot(km.basic.4, basic.table, basic.fullvars)
-cluster.boxplot(km.basic.5, basic.table, basic.fullvars)
+cluster.boxplot(km.basic.4, basic.table, basic.numvars)
+cluster.boxplot(km.basic.5, basic.table, basic.numvars)
 ```
 
 Clusters including (modified) population density:
 ```{r clustplot.pden, fig.width=10, fig.height=10}
-cluster.boxplot(km.pden.4, pden.table, pden.fullvars)
-cluster.boxplot(km.pden.5, pden.table, pden.fullvars)
-cluster.boxplot(km.pden.6, pden.table, pden.fullvars)
+cluster.boxplot(km.pden.4, pden.table, pden.numvars)
+cluster.boxplot(km.pden.5, pden.table, pden.numvars)
+cluster.boxplot(km.pden.6, pden.table, pden.numvars)
 ```
 
 How similar are these clusters?  Check the similarity matrices
@@ -66,35 +71,76 @@ mlist.sim.matrix(pden.members.4, pden.members.6)
 mlist.sim.matrix(pden.members.5, pden.members.6)
 ```
 
+Based on this it looks like the 6-cluster pden model might be kind of splitting cluster 5.1 into 6.3 and 6.4.  For the time being, I'm going to drop it.  (We need a better way of evaluating the clustering.  Maybe 5.1 _should_ have been split.  Look into measures of compactness.)
+
+Comparing clusters with different sets of predictors is kind of tricky because the input datasets are (potentially) different.  For now we'll just do the modeling on each group of clusters separately and compare the results.
+
 ```{r fitmodels}
 ## same as basic.predictors and pden.predictors above, but expressed as a formula
 basic.f <- pcc.rate~GDP.rate + pcGDP + urban.growth + urban.pop + pop.rate
 pden.f  <- pcc.rate~pcGDP + GDP.rate + urban.growth + urban.pop + pop.rate + pop.den
+
+## split basic data set into testing and training sets
+basic.split <- master.table[complete.cases(master.table[,basic.fullvars]),]
+basic.split <- split(basic.split, basic.split$ISO %in% testing.countries)
+names(basic.split) <- c("training","testing")
+
+## Fit the whole dataset with degre=1 and degree=2.  
+basic.lm <- lm(formula=basic.f, data=basic.split$training)
+basic.earth.d1 <- earth(formula=basic.f, data=basic.split$training, degree=1)
+basic.earth.d2 <- earth(formula=basic.f, data=basic.split$training, degree=2)
+
+
+## Evaluate RMS errors.  The rms.eval function wants a list of testing and training 
+## datasets, which we don't really have (yet), so insert a dummy for the testing set
+rms.eval(basic.lm, basic.split, prn=FALSE)
+rms.eval(basic.earth.d1, basic.split, prn=FALSE)
+rms.eval(basic.earth.d2, basic.split, prn=FALSE)
+  
 ```
 
-The earth model with the basic parameters and degree 1 seems to be our best contender so far.  Here's the scatterplot:
+The earth model with the basic parameters and degree 1 seems to be our best contender so far.  Degree 2 does better on the training set, but worse on the training set, a clear indicator of overfitting.  Here's the scatterplot for that and for the basic linear model:
 
 ```{r scatterplot.earth.basic.d1}
-#scatterplot.model(basic.earth.d1, datasets.trailing, sz=2)
+scatterplot.model(basic.lm, basic.split, sz=2)
+scatterplot.model(basic.earth.d1, basic.split, sz=2)
 ```
 
-The cluster results are also intriguing, but we haven't had a chance to do cross-validation on them yet.  Clustering on the trailing data with 5 clusters seems to produce the best results so far (but we haven't really looked at the 6-cluster data yet.)
+The cluster results are also intriguing. Cross-validation is complicated by the fact that the testing countries don't fall evenly across the clusters, so we've only done it in a limited way.
+
 ```{r cluster5}
-#cmodel.trailing.5.d1 <- cluster.modelfit(km.trailing.5, complete.trailing, formula=f.basic.d1, fitfun=earth, degree=1)
-#cmodel.trailing.5.d2 <- cluster.modelfit(km.trailing.5, complete.trailing, formula=f.basic.d1, fitfun=earth, degree=2)
-#cat("cluster basic with trailing data (degree=1)\n")
-#cluster.rms.eval(km.trailing.5, complete.trailing, cmodel.trailing.5.d1, prn=FALSE)
-#cat("cluster basic with trailing data (degree=2)\n")
-#cluster.rms.eval(km.trailing.5, complete.trailing, cmodel.trailing.5.d2, prn=FALSE)
+cmodel.basic.5.lm <- cluster.modelfit(km.basic.5, basic.table, formula=basic.f, fitfun=lm, testset=testing.countries)
+cmodel.basic.5.d1 <- cluster.modelfit(km.basic.5, basic.table, formula=basic.f, fitfun=earth, degree=1)
+cmodel.basic.5.d1alt <- cluster.modelfit(km.basic.5, basic.table, formula=basic.f, fitfun=earth, testset=testing.countries, degree=1)
+cmodel.basic.5.d2 <- cluster.modelfit(km.basic.5, basic.table, formula=basic.f, fitfun=earth, degree=2)
+cmodel.pden.5.lm <- cluster.modelfit(km.pden.5, pden.table, formula=pden.f, fitfun=lm, testset=testing.countries)
+cmodel.pden.5.d1 <- cluster.modelfit(km.pden.5, pden.table, formula=pden.f, fitfun=earth, degree=1)
+cmodel.pden.5.d2 <- cluster.modelfit(km.pden.5, pden.table, formula=pden.f, fitfun=earth, degree=2)
+
+cluster.rms.eval(km.basic.5, basic.table, cmodel.basic.5.lm, prn=FALSE, testing.set=testing.countries)
+cluster.rms.eval(km.basic.5, basic.table, cmodel.basic.5.d1, prn=FALSE, testing.set=testing.countries)
+cluster.rms.eval(km.basic.5, basic.table, cmodel.basic.5.d1alt, prn=FALSE, testing.set=testing.countries)
+cluster.rms.eval(km.basic.5, basic.table, cmodel.basic.5.d2, prn=FALSE, testing.set=testing.countries)
+
+cluster.rms.eval(km.pden.5, pden.table, cmodel.pden.5.lm, prn=FALSE, testing.set=testing.countries)
+cluster.rms.eval(km.pden.5, pden.table, cmodel.pden.5.d1, prn=FALSE, testing.set=testing.countries)
+cluster.rms.eval(km.pden.5, pden.table, cmodel.pden.5.d2, prn=FALSE, testing.set=testing.countries)
 ```
 
-The degree 2 looks slightly better, though that's without any cross-validation applied.  Here's the scatterplot:
+The degree 2 looks slightly better, though that's without any cross-validation applied.  Here are the scatterplots:
+
 ```{r cluster.scatterplot}
-#cluster.scatterplot.model(km.trailing.5, complete.trailing, cmodel.trailing.5.d2, sz=2)
+cluster.scatterplot.model(km.basic.5, basic.table, cmodel.basic.5.d2, sz=2)
+cluster.scatterplot.model(km.pden.5, pden.table, cmodel.pden.5.d2, sz=2)
 ```
 
-What a mess.  Before we were including the output variable in the clustering, so we were getting models on the back end that basically just used intercepts to adjust the mean output value in each cluster.  Take away that extra knowledge, and...  
+The degree 2 fits look a little suspect.  Clusters 2 and 4 are being fit mostly by the intercept term.
 
-```{r cluster.anly}
-#cluster.boxplot(km.trailing.5, complete.trailing, c(trailing.basic,"pcc.rate"))
+How do the models differ with and without the clustering (and with different versions of the clustering)?  Here are the model summaries for the straight linear model.
+
+```{r model.summaries}
+summary(basic.lm)
+lapply(cmodel.basic.5.lm, summary)
+#lapply(cmodel.basic.5.d1alt, summary)
+lapply(cmodel.pden.5.lm, summary)
 ```

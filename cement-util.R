@@ -272,9 +272,13 @@ cluster.boxplot <- function(cluster.obj, data,
 ### fit a separate model to the data in each cluster
 cluster.modelfit <- function(cluster.obj, data,
                              formula=pcc.rate~GDP.rate,
-                             fitfun=lm, ...)
+                             fitfun=lm, testset=NULL,
+                             ...)
 {
     cdata <- split(data, as.factor(cluster.obj$cluster))
+    if(!is.null(testset)) {
+        cdata <- lapply(cdata, function(d) {d[!d$ISO %in% testset,]})
+    }
     lapply(cdata, function(d){fitfun(formula=formula, data=d, ...)})
 }
 
