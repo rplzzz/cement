@@ -106,6 +106,7 @@ working.table <- lapply(working.table,
                             tbl$GDP.rate <- growth.fac(tbl, lag, "GDP")
                             tbl$pcc.rate <- growth.fac(tbl, lag, "pccement")
                             tbl$pop.rate <- growth.fac(tbl, lag, "pop.tot")
+                            tbl$pcGDP.rate <- tbl$GDP.rate - tbl$pop.rate
 
                             ## leading versions of the indicators above
                             tbl$ld.GDP.rate <- growth.fac(tbl, lag, "GDP", TRUE)
