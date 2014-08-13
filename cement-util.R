@@ -327,6 +327,15 @@ cluster.predict <- function(clustid, data, modellist)
         clustid) 
 }
 
+### get the residuals for a dataset when a separate model has been fit
+### for each cluster.  We have to supply the data and run predict on
+### it because some of the elements may have been withheld for
+### cross-validation, so the model won't have residuals for them.
+cluster.resid <- function(clustid, data, modellist, actvar="pcc.rate")
+{
+    pred  <- cluster.predict(clustid, data, modellist)
+    data[[actvar]] - pred               # return value
+}
 
 ### evaluate rms error for a model comprising a collection of cluster
 ### submodels.  Unfortunately, this involves some duplication from
@@ -382,4 +391,14 @@ cluster.scatterplot.model <- function(cluster.obj, data, modellist, outvar="pcc.
                 stat_function(fun="identity", color="black", linetype=2, size=1)
 }
 
+cluster.residplot <- function(cluster.obj, data, modellist, xvar="pcGDP.rate", pal="Set1", sz=1.5)
+{
+    clustid <- as.factor(cluster.obj$cluster)
+    r       <- cluster.resid(clustid, data, modellist)
+    xval    <- data[[xvar]]
+    pltdata <- data.frame(xval=xval, residual=r, cluster.id=clustid)
+    ggplot(data=pltdata, aes(x=xval, y=residual, color=cluster.id)) +
+        geom_point(size=sz) + ggtitle("Model residuals vs. predictor value") +
+            xlab(xvar) + scale_color_brewer(type="qual", palette=pal)
+}
 

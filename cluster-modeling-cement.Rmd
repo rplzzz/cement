@@ -1,0 +1,112 @@
+---
+output:
+  html_document:
+    toc: yes
+---
+Clustering Analysis for GCAM:  Cement Modeling
+========================================================
+
+## Overview of the Model
+
+The dominant predictors for per-capita cement production are GDP growth rate and the previous period's production.  This suggests modeling cement production growth rates in terms of GDP growth rates.  Happily, this is very similar to the model that GCAM uses, which makes it easier to compare results.  The regression formula I used is 
+$$\log \left(\frac{d(t)}{d(t-5)}\right) = \beta_0 + \beta_1 \log \left(\frac{g(t)}{g(t-5)}\right) + \ldots,$$
+where $d$ is per-capita cement demand, $t$ is the time in years, and $g$ is per-capita GDP.  The ellipsis represents terms for additional predictors that were tried during the project.
+
+Another method I used to introduce other predictors was to cluster the data using those predictors and then fit a model separately to the data in each cluster.  When using this technique it seems that it is generally not advisable to include the predictors used in the clustering in the regression model.  The reason for this is that within a cluster the data have similar values for some or all of the clustering variables.  Therefore, the regression coefficients for these predictors often turn out not to be statistically significant in the regression fits.  In essence, they add to the model complexity while providing very little improvement in the model's fidelity.  
+
+In the end, I wound up using all of the additional predictors in the clustering analysis, leaving only the intercept and $g$ terms in the regression model.  This gives us a model that is readily interpretable.  The clusters line up well with existing country classifications, and there are only two regression coefficients for each cluster.  The predictors used were:
+
+Clustering variables | Regression variables
+-------------------- | --------------------
+per-capita GDP (**pcGDP**) | per-capita GDP growth factor (predictor) (**pcGDP.rate**)
+urbanization fraction (**urban.pop**) | per-capita cement growth factor (response) (**pcc.rate**)
+urban population growth rate (**urban.growth**) |  -
+total population growth rate (**pop.rate**) |  -
+
+In addition, I considered a modified population density statistic (calculated from gridded population data, with grid cells below a certain population threshold not considered for either population or area), but I eventually elected not to include it because it added little value and is probably not practical to use in GCAM.
+
+You may be wondering at this point what happened to the "MARS" models that I talked so much about early in the project.  The answer is that the MARS models seemed no longer to add value (relative to linear models) once I began clustering on the predictors.  Apparently, the hinge functions used in the MARS models were acting as a form of ersatz clustering by allowing the otherwise linear coefficients of the predictors to change when certain thresholds were crossed.  Since the cluster models were easier to intepret and had some potential application beyond cement demand, I dropped the MARS models.
+
+### Data filtering and cross-validation
+
+### Comparison to GCAM
+
+GCAM models per-capita final demand using 
+$$d(t) = d(t-1) \left(\frac{g(t)}{g(t-5)}\right)^{\beta_g} \left(\frac{p(t)}{p(t-5)}\right)^{\beta_p},$$
+where $p$ is the price in the relevant supply sector, $d$ is *per-capita* demand, and $\beta_g$ and $\beta_p$ are elasticities that are supplied as input.  They are allowed to vary by region and over time.  With a little rearranging, the first term is evidently identical to our regression formula, minus the intercept term.  Since I didn't have historical price data for cement, I wasn't able to include the second term.  This omission undoubtedly accounts for some of the unexplained variance in the models.
+
+*Include commentary on GCAM elasticities here*
+
+## Clustering Analysis
+
+```{r loaddata}
+require(ggplot2)
+source("cement-util.R")
+master.table <- dget(file="cement-table.dat")
+master.table <- master.table[master.table$year %% 5 == 1,]
+testing.countries <- dget(file="testing-countries.dat")
+set.seed(8675309)
+```
+```{r simple.clustering, fig.width=10, fig.height=8}
+simple.clustervars <- c("pcGDP", "urban.growth", "urban.pop", "pop.rate")
+simple.extravars   <- c("pcGDP.rate", "pcc.rate")
+simple.plotvars    <- c(simple.clustervars, simple.extravars)
+simple.f           <- pcc.rate ~ pcGDP.rate
+
+## Also fit the plain linear model, which we can get by doing just one cluster.
+gcam  <- cluster.model(master.table, simple.clustervars, simple.extravars, simple.f, 1,
+                        testset=testing.countries)
+simple <- cluster.model(master.table, simple.clustervars, simple.extravars, simple.f, 5,
+                                   testset=testing.countries)
+
+cluster.boxplot(simple$km, simple$table, simple.plotvars)
+```
+
+Looking at the indicator variables for the clusters, we can summarize
+the clusters as follows:
+
+1.  Rich, developed countries.<br>
+    Examples:  US, Japan, South Korea (2006+)
+2.  Upper-middle income countries with moderately-high urbanization and low
+    population growth.<br>
+    Spot-checking suggests that countries in this group often (but not
+    always) stagnate here.<br>
+    Examples:  Russia, Hungary, Jamaica (1991+), Ireland (1981--1991)
+3.  Low-income, lightly-urbanized countries.<br>
+    Examples:  China (-1996), Nepal, Kenya, Albania (-1986)
+4.  Upper-middle income countries with high urbanization and high
+    population growth.<br>
+    The per-capita GDP range for this group overlaps a lot with group
+    2, but there is a clear difference in urbanization, urban growth,
+    and population growth.<br>
+    Examples:  South Korea (1986--2001), Mexico (1981+), Saudi Arabia
+    (1981+), Turkey (2006+), Brazil (1981+)
+5.  Middle-income, urbanizing countries<br>
+    Examples:  China (2001+), Brazil (-1976), Ireland (-1976), Iran
+    (-2001), Jamaica (-1986)
+
+## Regression model on the clustered data
+
+```{r simple.modeling}
+cluster.rms.eval(gcam$km, gcam$table, gcam$model, testing.set=testing.countries)
+cluster.rms.eval(simple$km, simple$table, simple$model, testing.set=testing.countries)
+cluster.scatterplot.model(gcam$km, gcam$table, gcam$model, sz=2)
+cluster.scatterplot.model(simple$km, simple$table, simple$model, sz=2)
+```
+
+So, it's slightly better than the unclustered linear model (as measured by RMS error), but not hugely so.  Let's see the model coefficients.
+
+```{r simple.coefs}
+lapply(gcam$model, summary)
+lapply(simple$model, summary)
+```
+
+Notice that some of them are similar to the ones we got from the "gcam" model, while others are rather different.  What does it mean in practice?  Let's take China as an example:
+
+```{r chn.example}
+country.clust("CHN", simple$table, simple$km$cluster, simple$model)
+```
+
+So, sometime around 2000 China moves from group 3 to group 5. When this happens, the coefficient for its GDP growth rate becomes smaller, though the intercept term offsets that, to some extent.
+
+# Conclusions
