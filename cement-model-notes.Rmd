@@ -1,7 +1,3 @@
----
-output:
-  html_document: default
----
 Notes on cement modeling
 ========================================================
 
@@ -149,17 +145,22 @@ lapply(cmodel.pden.5.lm, summary)
 
 Interesting.  It looks like GDP.rate is the only one that is consistently significant.  That isn't too surprising.  Much of the information in the other variables has been extracted by the clustering process.  This suggests a new approach:  cluster on the indicators excluding GDP.rate, then fit a simple model with just GDP.rate (possibly including an intercept) to each cluster.
 
+**NB: I changed the predictor to pcGDP.rate in a subsequent draft in order to facilitate comparison with GCAM**
+
 ```{r simple.clustering, fig.width=10, fig.height=8}
 simple.clustervars <- c("pcGDP", "urban.growth", "urban.pop", "pop.rate")
-simple.extravars   <- c("GDP.rate", "pcc.rate")
+simple.extravars   <- c("pcGDP.rate", "pcc.rate")
 simple.plotvars    <- c(simple.clustervars, simple.extravars)
-simple.f           <- pcc.rate ~ GDP.rate
+simple.f           <- pcc.rate ~ pcGDP.rate
 
 pden.clustervars   <- c("pcGDP", "urban.growth", "urban.pop", "pop.rate", "pop.den")
 pden.extravars     <- simple.extravars
 pden.plotvars      <- c(pden.clustervars, pden.extravars)
 pden.f             <- simple.f
 
+## Also fit the plain linear model, which we can get by doing just one cluster.
+gcam  <- cluster.model(master.table, simple.clustervars, simple.extravars, simple.f, 1,
+                        testset=testing.countries)
 simple <- cluster.model(master.table, simple.clustervars, simple.extravars, simple.f, 5,
                                    testset=testing.countries)
 pden   <- cluster.model(master.table, pden.clustervars, pden.extravars, pden.f, 5,
@@ -169,11 +170,19 @@ cluster.boxplot(simple$km, simple$table, simple.plotvars)
 cluster.boxplot(pden$km, pden$table, pden.plotvars)
 ```
 
-Encouraging.  We don't get any clusters that have all the low-growth or high-growth entries like we did before.  Let's see how the models do.
+Encouraging.  We don't get any clusters that have all the low-growth or high-growth entries like we did before.  Let's see how the models do.  Let's take a look at the countries in the simple clusters.
+
+```{r simple.countries}
+simple.countries <- simple.countries <- clust.countries(simple$table, simple$km$cluster)
+simple.countries
+mlist.sim.matrix(simple.countries, simple.countries)
+```
 
 ```{r simple.modeling}
+cluster.rms.eval(gcam$km, gcam$table, gcam$model, testing.set=testing.countries)
 cluster.rms.eval(simple$km, simple$table, simple$model, testing.set=testing.countries)
 cluster.rms.eval(pden$km, pden$table, pden$model, testing.set=testing.countries)
+cluster.scatterplot.model(gcam$km, gcam$table, gcam$model, sz=2)
 cluster.scatterplot.model(simple$km, simple$table, simple$model, sz=2)
 cluster.scatterplot.model(pden$km, pden$table, pden$model, sz=2)
 ```
@@ -181,18 +190,15 @@ cluster.scatterplot.model(pden$km, pden$table, pden$model, sz=2)
 So, it's slightly better than the unclustered linear model (as measured by RMS error), but not hugely so.  Including the population density seems to make no discernible difference, so we'll drop it from here on.  Let's see the model coefficients.
 
 ```{r simple.coefs}
+lapply(gcam$model, summary)
 lapply(simple$model, summary)
 ```
 
 Notice that some of them are similar to the ones we got from the basic.lm model, while others are rather different.  What does it mean in practice?  Let's take China as an example:
 
 ```{r chn.example}
-sel   <- simple$table$ISO == "CHN"
-clust <- simple$km$cluster[sel]
-coef  <- sapply(clust, function(c) {simple$model[[c]]$coefficients["GDP.rate"]})
-data.frame(simple$table[sel,c("ISO","year")], cluster=clust, GDP.rate.coef=coef)
+country.clust("CHN", simple$table, simple$km$cluster, simple$model)
 ```
 
-So, sometime around 2000 China moves from group 4 (roughly speaking:  poor, lightly urbanized countries) to group 1 (roughly speaking:  middle-income, urbanizing countries), and the coefficient for its GDP growth rate becomes a lot smaller.
+So, sometime around 2000 China moves from group 3 (roughly speaking:  poor, lightly urbanized countries) to group 1 (roughly speaking:  middle-income, urbanizing countries). When this happens, the coefficient for its GDP growth rate becomes smaller, though the intercept term offsets that, to some extent.
 
-Note that the coefficient doesn't tell the whole story.  Group 5, comprising the rich countries, has a large coefficient, but its GDP growth rates are lower, so you get slightly lower per-capita cement growth rates in those countries.

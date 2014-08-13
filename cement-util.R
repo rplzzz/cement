@@ -193,6 +193,22 @@ clust.countries <- function(data, clustid) {
     lapply(clusters, function(d) {unique(sort.int(d$ISO, method="quick"))})
 }
 
+### Find the clusters that a country lives in, by year
+country.clust <- function(country, data, clustid, clustmodel=NULL, coefvar="pcGDP.rate") {
+    sel <- data$ISO == country
+    clust <- clustid[sel]
+    if(is.null(clustmodel)) {
+        data.frame(data[sel,c("ISO","year")], cluster=clust)
+    } else {
+        coef <- sapply(clust, function(c) {clustmodel[[c]]$coefficients[[coefvar]]})
+        out <- data.frame(data[sel,c("ISO","year")], clust, coef)
+        names(out) <- c("ISO", "year", "cluster", paste(coefvar,"coef",sep='.'))
+        out
+    }
+}
+
+    
+
 ### Find the data entries in a cluster
 clust.members <- function(data, clustid) {
     data$ID <- rownames(data)
