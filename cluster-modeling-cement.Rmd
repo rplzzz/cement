@@ -6,6 +6,15 @@ output:
 Clustering Analysis for GCAM:  Cement Modeling
 ========================================================
 
+```{r loaddata, echo=FALSE, message=FALSE}
+require(ggplot2)
+source("cement-util.R")
+master.table <- dget(file="cement-table.dat")
+master.table <- master.table[master.table$year %% 5 == 1,]
+testing.countries <- dget(file="testing-countries.dat")
+set.seed(8675309)
+```
+
 ## Overview of the Model
 
 The dominant predictors for per-capita cement production are GDP growth rate and the previous period's production.  This suggests modeling cement production growth rates in terms of GDP growth rates.  Happily, this is very similar to the model that GCAM uses, which makes it easier to compare results.  The regression formula I used is 
@@ -29,24 +38,41 @@ You may be wondering at this point what happened to the "MARS" models that I tal
 
 ### Data filtering and cross-validation
 
+I dropped all the data points with zero cement production, on the grounds that we are using this data as a proxy for demand, and whether or not production was actually zero in those countries during those years, demand almost certainly was not.
+
+I also kept the data only at five-year intervals, starting at 1971 (because that was the earliest year in the cement output database).  This filtering wasn't strictly necessary; the model will fit with all of the data included.  However, many of the quantities are highly correlated from one year to the next, so using all of the datapoints in the regression would render any of the statistical evaluations (F-tests, primarily) of the fit meaningless.  I had originally evaluated the models using data at 10-year intervals, but 5-year data is easier to compare to GCAM.  Therefore, we should be a little skeptical of the p-values returned by the F-tests; however, in most cases the p-values are so far below the traditional thresholds that we can be fairly confident in them.
+
+Approximately 1/5 of the data were held back as a testing set for cross-validation.  These data were chosen as a randomly-selected group of countries, rather than as a randomly-selected group of data rows because of the correlation issue mentioned above.  Holding back, say, China-1986 for cross-validation is rather useless if you include China-1981 and China-1991 in the training set because those data points contain much overlapping information with the point held back.  The hold-back was for the regression analysis; the clustering analysis used all available data, including the testing set.  This was done for technical reasons.  I needed cluster assignments for all data lines in the set, and there isn't a built-in for assigning new data for clusters.  It's not conceptually hard to assign each new data point to the nearest cluster center, but I was trying to hurry, so I took the easy way out.  As a result, the cluster models should not be considered as fully cross-validated.  In practice, I don't think that holding back the testing set will change the clustering much, but there you have it.
+
+The testing countries were chosen when the data set was generated, and they remain constant over subsequent runs (i.e., they are not randomly regenerated each time).  The testing countries are: `r testing.countries`.  Points labeled "testing" in the plots below refer to these countries, while "training" comprises everything else.
+
 ### Comparison to GCAM
 
 GCAM models per-capita final demand using 
 $$d(t) = d(t-1) \left(\frac{g(t)}{g(t-5)}\right)^{\beta_g} \left(\frac{p(t)}{p(t-5)}\right)^{\beta_p},$$
 where $p$ is the price in the relevant supply sector, $d$ is *per-capita* demand, and $\beta_g$ and $\beta_p$ are elasticities that are supplied as input.  They are allowed to vary by region and over time.  With a little rearranging, the first term is evidently identical to our regression formula, minus the intercept term.  Since I didn't have historical price data for cement, I wasn't able to include the second term.  This omission undoubtedly accounts for some of the unexplained variance in the models.
 
-*Include commentary on GCAM elasticities here*
+The values used for the elasticities in GCAM (at least the version that I have) are all over the map.  Here, for example, are the values used for the Canada and US regions:
+
+year | income elasticity (Canada) | income elasticity (USA)
+---- | ----------------- |  ---------------
+2020 | 0.35              |   -0.07
+2035 | -0.29             |   -0.12
+2050 | 0.41              |   -0.25
+2065 | -0.14             |   -0.17
+2080 | -0.08             |   -0.06
+2095 | -0.10             |    -0.02
+
+I'm told that these values have been or are being completely reworked in a recent GCAM release, so I won't spend too much time comparing them to the values that come out of these model fits, other than to note that there doesn't seem to be any evidence in the historical data for negative income elasticities.
 
 ## Clustering Analysis
 
-```{r loaddata}
-require(ggplot2)
-source("cement-util.R")
-master.table <- dget(file="cement-table.dat")
-master.table <- master.table[master.table$year %% 5 == 1,]
-testing.countries <- dget(file="testing-countries.dat")
-set.seed(8675309)
-```
+I used the K-means clustering algorithm to sort the data rows into clusters.  Since the clustering is done by data row, a country can move from one cluster to another over time as its economic conditions change.  The K-means algorithm requires a user to specify the number of centers (i.e., clusters) in advance.  I chose 5 centers, based on some trial and error.  With more than 5 centers the resulting clusters "seemed"" poorly-separated.  This is an area that could use some improvement.  There are statistics for evaluating cluster models, as well as advanced clustering algorithms that try to determine the number of clusters supported by the data automatically.
+
+The clusters are summarized by boxplots in each of the cluster variables, as well as the regression variables (which were not used in the clustering algorithm).  The boxes represent the range from the first to third quartile point for the data in each cluster, with the heavy bar showing the median.  The whiskers above and below the boxes show the points within 1.5 times the interquartile range of the upper and lower quartile points.  Outliers beyond the end of the whiskers are plotted individually.  Note that some predictors are shown on a logarithmic y-axis.
+
+We also compute (but do not plot) a "cluster" analysis with just one cluster.  This is for convenience, as it allows us to manipulate a "gcam" style model using the same functions that we use for the cluster models.
+
 ```{r simple.clustering, fig.width=10, fig.height=8}
 simple.clustervars <- c("pcGDP", "urban.growth", "urban.pop", "pop.rate")
 simple.extravars   <- c("pcGDP.rate", "pcc.rate")
@@ -84,6 +110,10 @@ the clusters as follows:
 5.  Middle-income, urbanizing countries<br>
     Examples:  China (2001+), Brazil (-1976), Ireland (-1976), Iran
     (-2001), Jamaica (-1986)
+
+Neither per-capita GDP growth factor (*pcGDP.rate*) nor per-capita cement growth factor (*pcc.rate*) show much differentiation between clusters.  This is not surprising, since they were not used in the cluster analysis.  In this case, that's a desirable property, as it makes it likely that we will get relativly robust regressions in all of the clusters.
+
+*Try plotting pcc.rate vs. pcGDP.rate by cluster.*
 
 ## Regression model on the clustered data
 
