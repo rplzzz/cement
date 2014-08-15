@@ -65,6 +65,14 @@ think that any of these countries consumed no cement at all.
     missing values, the growth factor from the nearest available
     year is converted to a 5-year equivalent factor.
 
+11. **pop.rate**: log of 5-year growth factor for population<br>
+    Units:  unitless<br>
+    Source:  Internally calculated as above.
+
+11. **pcGDP.rate**:  log of 5-year growth factor in per-capita GDP<br>
+    Units:  unitless<br>
+    Source:  Internally calculated as GDP.rate - pop.rate
+
 12. **cement.stock**:  (very) loose proxy for the total stock of
     cement products to date.  It is calculated as the cumulative sum
     of the cement variable from the earliest date in the raw data.<br>
