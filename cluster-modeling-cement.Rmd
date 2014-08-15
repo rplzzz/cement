@@ -1,5 +1,6 @@
 ---
 output:
+  word_document: default
   html_document:
     toc: yes
 ---
@@ -50,7 +51,7 @@ The testing countries were chosen when the data set was generated, and they rema
 
 GCAM models per-capita final demand using 
 $$d(t) = d(t-1) \left(\frac{g(t)}{g(t-5)}\right)^{\beta_g} \left(\frac{p(t)}{p(t-5)}\right)^{\beta_p},$$
-where $p$ is the price in the relevant supply sector, $d$ is *per-capita* demand, and $\beta_g$ and $\beta_p$ are elasticities that are supplied as input.  They are allowed to vary by region and over time.  With a little rearranging, the first term is evidently identical to our regression formula, minus the intercept term.  Since I didn't have historical price data for cement, I wasn't able to include the second term.  This omission undoubtedly accounts for some of the unexplained variance in the models.
+where $p$ is the price in the relevant supply sector, $d$ is *per-capita* demand, and $\beta_g$ and $\beta_p$ are elasticities that are supplied as input.  They are allowed to vary by region and over time.  With a little rearranging, the first term is evidently identical to our regression formula, minus the intercept term, which GCAM doesn't include.  Since I didn't have historical price data for cement, I wasn't able to include the second term.  This omission undoubtedly accounts for some of the unexplained variance in the models.
 
 The values used for the elasticities in GCAM (at least the version that I have) are all over the map.  Here, for example, are the values used for the Canada and US regions:
 
@@ -113,7 +114,13 @@ the clusters as follows:
 
 Neither per-capita GDP growth factor (*pcGDP.rate*) nor per-capita cement growth factor (*pcc.rate*) show much differentiation between clusters.  This is not surprising, since they were not used in the cluster analysis.  In this case, that's a desirable property, as it makes it likely that we will get relativly robust regressions in all of the clusters.
 
-*Try plotting pcc.rate vs. pcGDP.rate by cluster.*
+Plotting the response variable *pcc.rate* against the predictor *pcGDP.rate* reveals that there is a plausible linear (in log-log coordinates, remember) relationship; however, there are also some notable outliers, namely the cluster-2 point at the far right of the plot and the cluster-3 and 5 points at the top-center of the plot.  We can expect these to be poorly fit in the results.  There doesn't seem to be an obvious difference between the clusters, but there isn't obviously *not* a difference either.
+
+```{r rate.plot}
+qplot(data=simple$table, x=pcGDP.rate, y=pcc.rate, col=as.factor(simple$km$cluster)) + geom_point(size=0.5) + 
+          scale_color_brewer(type="qual", palette="Set1")
+```
+
 
 ## Regression model on the clustered data
 
@@ -124,19 +131,43 @@ cluster.scatterplot.model(gcam$km, gcam$table, gcam$model, sz=2)
 cluster.scatterplot.model(simple$km, simple$table, simple$model, sz=2)
 ```
 
-So, it's slightly better than the unclustered linear model (as measured by RMS error), but not hugely so.  Let's see the model coefficients.
+The cluster model produces a fit that is ever so slightly better (as measured by RMS error) than the unclustered regression, but you couldn't really call it a significant improvement.  The scatterplots look nearly identical, which is kind of surprising, considering how different the model fits are (see below).  
+
+Here are the coefficients for the clustered and unclustered models:
 
 ```{r simple.coefs}
 lapply(gcam$model, summary)
 lapply(simple$model, summary)
 ```
 
-Notice that some of them are similar to the ones we got from the "gcam" model, while others are rather different.  What does it mean in practice?  Let's take China as an example:
+The "gcam" model (which, unlike GCAM, allows for an intercept term) finds a slope (i.e., elasticity) of `r coef(gcam$model[[1]])[2]`, with no appreciable intercept.  The cluster regressions, on the other hand find coefficients that are in some cases quite different.  Here is a recap of the coefficients in a more compact table:
+
+cluster | slope | intercept
+------- | ------ | ---------
+1   |  `r coef(simple$model[[1]])[1]` | `r coef(simple$model[[1]])[2]`
+2   |  `r coef(simple$model[[2]])[1]` | `r coef(simple$model[[2]])[2]`
+3   |  `r coef(simple$model[[3]])[1]` | `r coef(simple$model[[3]])[2]`
+4   |  `r coef(simple$model[[4]])[1]` | `r coef(simple$model[[4]])[2]`
+5   |  `r coef(simple$model[[5]])[1]` | `r coef(simple$model[[5]])[2]`
+
+The highest coefficient is in the cluster of developed countries, which is surprising until we observe that the effect is offset by the intercept term for all but unusually high-growth countries in that cluster.  Cluster 2 follows a similar pattern.  Cluster 3 (low-income developing nations) has a relatively high elasticity, *without* a compensating intercept term.  Cluster 5 (middle-income nations) has a lower elasticity, and cluster 4 (upper-middle income, high population growth) has an elasticity that is lower still.  These results are roughly consistent with our preconceptions about cement use in the developing world as compared to that in the developed world.
+
+Cluster 4 deserves special mention because the fit of the regression model in that cluster is pretty terrible (for that matter, the fit in cluster 3 isn't spectacular.)  
+
+What does it mean in practice?  Let's take China as an example:
 
 ```{r chn.example}
 country.clust("CHN", simple$table, simple$km$cluster, simple$model)
 ```
 
-So, sometime around 2000 China moves from group 3 to group 5. When this happens, the coefficient for its GDP growth rate becomes smaller, though the intercept term offsets that, to some extent.
+So, sometime around 2000 China moves from group 3 to group 5. When this happens, the coefficient for its GDP growth rate becomes smaller, though the intercept term offsets that, to some extent.  Presumably, with further growth China would move into either cluster 2 or cluster 4, with attendant reduction in cement usage.
 
 # Conclusions
+
+The first observation I would make is that neither the ordinary regression, nor the cluster regression show any historical evidence for the negative elasticities that we use in GCAM.  It is possible that in the future periods covered by GCAM we may move into new economic regimes where income elasticity for cement demand becomes negative, but such regimes are apparently without precedent in the data we have.
+
+Second, it is not clear that the cluster model provides a significant improvement over an unclustered regression model.  In fact, the RMS errors achieved by the cluster model are almost exactly comparable to the unclustered multivariate regressions that included the variables used in the clustering analysis.  None of the models do a great job of predicting the data, and the residuals do not show any obvious relationship to any of the indicators I tried.  We could go hunting for more indicators, but we do need to be careful to limit ourselves to predictors for which projections covering our GCAM scenarios might plausibly be available.  
+
+One good candidate for an additional indicator, if the data are available, would be cement price.  Since GCAM includes a separate price elasticity, it makes sense to include it in an analysis like this one.  It would be a little surprising if price variations were large enough to account for the huge unexplained variance we are seeing, but it is possible.
+
+Finally, whether we end up using the cluster model for cement demand or not, I think the clustering analysis might be useful for some of the other quantities we have to model.  At least, it provides an alternative to geographical regions for grouping countries.  Perhaps for many purposes it makes more sense to group Paraguay with Angola (group 5) than with Brazil (group 4).
