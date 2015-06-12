@@ -16,6 +16,7 @@ country, two-letter, ISO, numerical
 "Austria","AT","AUT",40
 "Azerbaijan","AZ","AZE",31
 "Bahamas","BS","BHS",44
+"The Bahamas","BS","BHS",44
 "Bahrain","BH","BHR",48
 "Bangladesh","BD","BGD",50
 "Barbados","BB","BRB",52
@@ -27,6 +28,7 @@ country, two-letter, ISO, numerical
 "Bhutan","BT","BTN",64
 "Bolivia","BO","BOL",68
 "Bosnia and Herzegovina","BA","BIH",70
+"Bosnia & Herzegovina","BA","BIH",70
 "BosniaHerz","BA","BIH",70
 "Botswana","BW","BWA",72
 "Bouvet Island","BV","BVT",74
@@ -96,6 +98,7 @@ country, two-letter, ISO, numerical
 "French Southern Territories","TF","ATF",260
 "Gabon","GA","GAB",266
 "Gambia","GM","GMB",270
+"The Gambia","GM","GMB",270
 "Georgia","GE","GEO",268
 "Germany","DE","DEU",276
 "Ghana","GH","GHA",288
@@ -142,6 +145,7 @@ country, two-letter, ISO, numerical
 "Kyrgyz Republic","KG","KGZ",417
 "Lao PDR","LA","LAO",418
 "Lao","LA","LAO",418
+"Laos","LA","LAO",418
 "Latvia","LV","LVA",428
 "Lebanon","LB","LBN",422
 "Lesotho","LS","LSO",426
@@ -151,6 +155,7 @@ country, two-letter, ISO, numerical
 "Lithuania","LT","LTU",440
 "Luxembourg","LU","LUX",442
 "Macedonia, Republic of","MK","MKD",807
+"Macedonia","MK","MKD",807
 "Macedonia, FYR","MK","MKD",807
 "FYROM","MK","MKD",807
 "Madagascar","MG","MDG",450
@@ -190,11 +195,13 @@ country, two-letter, ISO, numerical
 "Norfolk Island","NF","NFK",574
 "Northern Mariana Islands","MP","MNP",580
 "Norway","NO","NOR",578
+"Svalbard","NO","NOR",578
 "Oman","OM","OMN",512
 "Pakistan","PK","PAK",586
 "Palau","PW","PLW",585
 "Palestinian Territory, Occupied","PS","PSE",275
 "West Bank and Gaza","PS","PSE",275
+"West Bank","PS","PSE",275
 "Panama","PA","PAN",591
 "Papua New Guinea","PG","PNG",598
 "Paraguay","PY","PRY",600
@@ -260,6 +267,7 @@ country, two-letter, ISO, numerical
 "Tokelau","TK","TKL",772
 "Tonga","TO","TON",776
 "Trinidad and Tobago","TT","TTO",780
+"Trinidad & Tobago","TT","TTO",780
 "Trinidad","TT","TTO",780
 "Tunisia","TN","TUN",788
 "Turkey","TR","TUR",792
